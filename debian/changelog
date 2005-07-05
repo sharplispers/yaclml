@@ -1,0 +1,31 @@
+yaclml (0.5.2+tla20050331-2) unstable; urgency=low
+
+  * debian/control:
+    * suggests cl-qbook for the documentation
+
+ -- Luca Capello <luca@pca.it>  Thu, 31 Mar 2005 16:22:44 +0200
+
+yaclml (0.5.2+tla20050331-1) unstable; urgency=low
+
+  * debian/files:
+    * removed
+  * debian/rules:
+    * added command to delete the .arch-ids folders
+
+ -- Luca Capello <luca@pca.it>  Thu, 31 Mar 2005 16:09:36 +0200
+
+yaclml (0.5.2+tla20050329) unstable; urgency=low
+
+  * arch revision:
+      yaclml--dev--0.5--patch-23
+
+ -- Luca Capello <luca@pca.it>  Tue, 29 Mar 2005 22:16:01 +0100
+
+yaclml (0.5.2+tla20050309) unstable; urgency=low
+
+  * Initial release
+  * arch revision:
+      yaclml--dev--0.5--patch-21
+
+ -- Luca Capello <luca@pca.it>  Wed,  9 Mar 2005 12:28:24 +0100
+
