@@ -45,7 +45,6 @@ install: build
 	dh_install $(pkg).asd $(clc-files)
 	cp -r src debian/$(debpkg)/$(clc-files)
 	cp -r t debian/$(debpkg)/$(clc-files)
-	find debian/$(debpkg)/$(clc-files) -name .arch-ids | xargs rm -r
 	dh_link $(clc-files)/$(pkg).asd $(clc-systems)/$(pkg).asd
 
 # Build architecture-independent files here.
