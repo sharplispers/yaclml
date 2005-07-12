@@ -172,7 +172,8 @@ characters of RESERVED have been registered in the entity table."
   "Resolves the xml entity ENT to a character.  Numeric entities are
 converted using CODE-CHAR, which only works in implementations that
 internally encode strings in US-ASCII, ISO-8859-1 or UCS."
-  (declare (type simple-base-string ent))
+  #-sb-unicode (declare (type simple-base-string ent))
+  #+sb-unicode (declare (type string ent))
   (or (and (>= (length ent) 2)
            (char= (char ent 0) #\#)
            (code-char
