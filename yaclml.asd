@@ -25,7 +25,7 @@
 					     (:file "handlers" :depends-on ("compile"))
                                              (:file "tal-environment"))
                                 :depends-on ("yaclml" :tags)))))
-    :properties ((version "0.5.2" "0.5.1" "0.5.0"))
+    :properties ((:features "v0.5.2" "v0.5.1" "v0.5.0"))
     :depends-on (:arnesi :iterate))
 
 (defsystem :yaclml.test
