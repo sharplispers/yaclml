@@ -147,7 +147,8 @@
               method
               name
               onreset
-              onsubmit)
+              onsubmit
+	      target)
 
 (def-html-tag <:frame :core
               frameborder
