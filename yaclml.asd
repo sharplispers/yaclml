@@ -34,6 +34,19 @@
 				     (:file "tal" :depends-on ("packages")))))
   :depends-on (:yaclml :FiveAM))
 
+(defun ensure-system-has-feature
+    (system-name version-string &optional (hint ""))
+  (let* ((features (asdf:component-property (asdf:find-system system-name) :features))
+         (message (format nil "YACLML requires the ~A feature of system ~S.
+~S currently only provides ~S.~%~A"
+                          version-string system-name system-name features hint)))
+    (unless (member version-string features :test #'string-equal)
+      (error message))))
+
+(defmethod asdf:perform :after ((op t) (system (eql (asdf:find-system :ucw))))
+  (ensure-system-has-feature :arnesi "join-strings-return-value"
+                             "Try pull'ing the latest arnesi or send an email to bese-devel@common-lisp.net"))
+
 ;;;; * Introduction
 
 ;;;; YACLML is a library for creating HTML in lisp.
