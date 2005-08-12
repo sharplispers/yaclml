@@ -108,16 +108,19 @@
   "Emit to the current yaclml-code a form which will, at runtime,
    princ ITEM. If (yaclml-constant-p ITEM) is true the princ will
    be done at compile time."
-  (dolist (item items)
-    (if (yaclml-constant-p item)
-        (if (stringp item)
-            (push item %yaclml-code%)
-            (push (princ-to-string item) %yaclml-code%))
-        (push `(princ ,item *yaclml-stream*) %yaclml-code%))))
+  (dolist (item items %yaclml-code%)
+    (push (cond
+            ((and (yaclml-constant-p item)
+                  (stringp item))
+             item)
+            ((yaclml-constant-p item)
+             (princ-to-string item))
+            (t `(princ ,item *yaclml-stream*)))
+          %yaclml-code%)))
 
 (defun emit-html (&rest items)
   "Like EMIT-PRINC but escapes html chars in item."
-  (dolist (item items)
+  (dolist (item items %yaclml-code%)
     (if (yaclml-constant-p item)
         (push (escape-as-html (princ-to-string item)) %yaclml-code%)
         (push `(princ (escape-as-html (princ-to-string ,item)) *yaclml-stream*) %yaclml-code%))))
@@ -138,7 +141,7 @@ If the value of any of the attributes is NIL it will be ignored.
 
 If a value is the symbol T the name of the attribute will be used
 as the value."
-  (dolist* ((key . value) attributes)
+  (dolist* ((key . value) attributes %yaclml-code%)
     (cond
       ((eql t value)
        ;; according to xhtml thoses attributes which in html are
