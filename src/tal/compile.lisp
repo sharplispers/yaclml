@@ -108,7 +108,7 @@
 (defun |$ tal reader| (stream char)
   "The $ char reader for tal expressions."
   (declare (ignore char))
-  `(lookup-tal-variable ',(read stream) *tal-environment*))
+  `(lookup-tal-variable ',(read stream) tal-environment))
 
 (defun read-tal-expression-from-string (expression)
   "Reads a single form from the string EXPRESSION using the TAL
@@ -236,8 +236,8 @@
   "Returns the source code for the tal function form the tal text STRING."
   (bind-tal-compile-environment ((generator (gensym)))
     (with-tal-compile-environment (generator)
-      `(lambda (*tal-environment* ,generator)
-         (declare (ignorable *tal-environment* ,generator))
+      `(lambda (tal-environment ,generator)
+         (declare (ignorable tal-environment ,generator))
          ,(let ((*package* (find-package :it.bese.yaclml.tags))
                 (*expression-package* expression-package))
             (transform-lxml-form (it.bese.yaclml.xmls:parse string :uri-to-package *uri-to-package*)))))))
