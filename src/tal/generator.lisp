@@ -14,7 +14,7 @@
 
 (defgeneric template-truename (generator name))
 
-(defclass file-system-generator ()
+(defclass file-system-generator (tal-generator)
   ((root-directories :initarg :root-directories :type list
 		     :accessor root-directories)
    (cachep :initarg :cachep :accessor cachep :initform t)))
