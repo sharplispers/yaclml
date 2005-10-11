@@ -6,32 +6,46 @@
 
 ;;;; ** Helper macro fer defining the tag macros
 
-(defmacro def-html-tag (name &rest attributes)
-  (let ((effective-attributes (with-collector (attrs)
-                                (dolist (attr attributes)
-                                  (case attr
-                                    (:core  (attrs 'class 'id 'style 'title))
-                                    (:i18n  (attrs 'dir 'lang))
-                                    (:event (attrs 'onclick 'ondblclick
-                                                   'onkeydown 'onkeypress
-                                                   'onkeyup 'onmousedown
-                                                   'onmousemove 'onmouseout
-                                                   'onmouseover 'onmouseup))
-                                    (t (attrs attr))))
-                                (attrs))))
-  `(deftag ,name (&attribute ,@effective-attributes &body body)
-     (if body
-         (progn
-           (emit-open-tag ,(string-downcase (symbol-name name))
-                          (list ,@(mapcar (lambda (attr)
-                                            `(cons ,(string-downcase (symbol-name attr)) ,attr))
-                                          effective-attributes)))
-           (emit-body body)
-           (emit-close-tag ,(string-downcase (symbol-name name))))
-         (emit-empty-tag ,(string-downcase (symbol-name name))
+(eval-when (:compile-toplevel)
+  (defun make-effective-attributes (attributes)
+    (with-collector (attrs)
+      (dolist (attr attributes)
+        (case attr
+          (:core  (attrs 'class 'id 'style 'title))
+          (:i18n  (attrs 'dir 'lang))
+          (:event (attrs 'onclick 'ondblclick
+                         'onkeydown 'onkeypress
+                         'onkeyup 'onmousedown
+                         'onmousemove 'onmouseout
+                         'onmouseover 'onmouseup))
+          (t (attrs attr))))
+      (attrs))))
+
+
+(defmacro def-empty-html-tag (name &rest attributes)
+  "Define a tag that has `End Tag` set to Forbidden and `Empty`
+set to Empty according to:
+http://www.w3.org/TR/1999/REC-html401-19991224/index/elements.html
+used so generated XHTML would follow guidelines described in
+http://www.w3.org/TR/xhtml1/#guidelines"
+  (let ((effective-attributes (make-effective-attributes attributes)))
+    `(deftag ,name (&attribute ,@effective-attributes &body body)
+     (emit-empty-tag ,(string-downcase (symbol-name name))
                          (list ,@(mapcar (lambda (attr)
                                            `(cons ,(string-downcase (symbol-name attr)) ,attr))
-                                         effective-attributes)))))))
+                                         effective-attributes))))))
+
+
+(defmacro def-html-tag (name &rest attributes)
+  (let ((effective-attributes (make-effective-attributes attributes)))
+  `(deftag ,name (&attribute ,@effective-attributes &body body)
+     (emit-open-tag ,(string-downcase (symbol-name name))
+                    (list ,@(mapcar (lambda (attr)
+                                      `(cons ,(string-downcase (symbol-name attr)) ,attr))
+                                    effective-attributes)))
+     (emit-body body)
+     (emit-close-tag ,(string-downcase (symbol-name name))))))
+
 
 ;;;; * All HTML4 tags
 
@@ -59,20 +73,20 @@
 
 (def-html-tag <:address :core :event :i18n)
 
-(def-html-tag <:area :core :event :i18n
-              alt
-              accesskey
-              coords
-              href
-              nohref
-              onblur
-              onfocus
-              shape
-              tabindex)
+(def-empty-html-tag <:area :core :event :i18n
+                    alt
+                    accesskey
+                    coords
+                    href
+                    nohref
+                    onblur
+                    onfocus
+                    shape
+                    tabindex)
 
 (def-html-tag <:b :core :event :i18n)
 
-(def-html-tag <:base href)
+(def-empty-html-tag <:base href)
 
 (def-html-tag <:bdo :i18n
               id
@@ -88,7 +102,7 @@
               onload
               onunload)
 
-(def-html-tag <:br :core)
+(def-empty-html-tag <:br :core)
 
 (def-html-tag <:button :core :event :i18n
               accesskey
@@ -106,13 +120,13 @@
 
 (def-html-tag <:code :core :event :i18n)
 
-(def-html-tag <:col :core :event :i18n
-              align
-              char
-              charoff
-              span
-              valign
-              width)
+(def-empty-html-tag <:col :core :event :i18n
+                    align
+                    char
+                    charoff
+                    span
+                    valign
+                    width)
 
 (def-html-tag <:colgroup :core :event :i18n
               align
@@ -148,16 +162,16 @@
               name
               onreset
               onsubmit
-	      target)
+              target)
 
-(def-html-tag <:frame :core
-              frameborder
-              longdesc
-              marginheight
-              marginwidth
-              noresize
-              scrolling
-              src)
+(def-empty-html-tag <:frame :core
+                    frameborder
+                    longdesc
+                    marginheight
+                    marginwidth
+                    noresize
+                    scrolling
+                    src)
 
 (def-html-tag <:frameset :core
               cols
@@ -180,7 +194,7 @@
 (def-html-tag <:head :i18n
               profile)
 
-(def-html-tag <:hr :core :event width align)
+(def-empty-html-tag <:hr :core :event width align)
 
 (deftag <:html (&attribute dir lang (prologue t) &body body)
   (when prologue
@@ -202,36 +216,36 @@
               scrolling
               src)
 
-(def-html-tag <:img :core :event :i18n
-              alt
-              src
-              height
-              ismap
-              longdesc
-              usemap
-              width)
+(def-empty-html-tag <:img :core :event :i18n
+                    alt
+                    src
+                    height
+                    ismap
+                    longdesc
+                    usemap
+                    width)
 
-(def-html-tag <:input :core :event :i18n
-              accept
-              accesskey
-              alt
-              checked
-              disabled
-              maxlength
-              name
-              onblur
-              onchange
-              onfocus
-              onselect
-              readonly
-              size
-              src
-              tabindex
-              type
-              usemap
-              value
-              width
-              height)
+(def-empty-html-tag <:input :core :event :i18n
+                    accept
+                    accesskey
+                    alt
+                    checked
+                    disabled
+                    maxlength
+                    name
+                    onblur
+                    onchange
+                    onfocus
+                    onselect
+                    readonly
+                    size
+                    src
+                    tabindex
+                    type
+                    usemap
+                    value
+                    width
+                    height)
 
 (def-html-tag <:ins :core :event :i18n
               cite
@@ -250,23 +264,23 @@
 
 (def-html-tag <:li :core :event :i18n)
 
-(def-html-tag <:link :core :event :i18n
-              charset
-              href
-              hreflang
-              media
-              rel
-              rev
-              type)
+(def-empty-html-tag <:link :core :event :i18n
+                    charset
+                    href
+                    hreflang
+                    media
+                    rel
+                    rev
+                    type)
 
 (def-html-tag <:map :core :event :i18n
               name)
 
-(def-html-tag <:meta :i18n
-              content
-              http-equiv
-              name
-              scheme)
+(def-empty-html-tag <:meta :i18n
+                    content
+                    http-equiv
+                    name
+                    scheme)
 
 (def-html-tag <:noframes :core :event :i18n)
 
@@ -301,12 +315,12 @@
 
 (def-html-tag <:p :core :event :i18n)
 
-(def-html-tag <:param
-              name
-              id
-              type
-              value
-              valuetype)
+(def-empty-html-tag <:param
+                    name
+                    id
+                    type
+                    value
+                    valuetype)
 
 (def-html-tag <:pre :core :event :i18n)
 
