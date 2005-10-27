@@ -43,7 +43,7 @@
     (unless (member version-string features :test #'string-equal)
       (error message))))
 
-(defmethod asdf:perform :after ((op t) (system (eql (asdf:find-system :ucw))))
+(defmethod asdf:perform :after ((op t) (system (eql (asdf:find-system :yaclml))))
   (ensure-system-has-feature :arnesi "join-strings-return-value"
                              "Try pull'ing the latest arnesi or send an email to bese-devel@common-lisp.net"))
 
