@@ -38,6 +38,17 @@ PUBLIC \"-//W3C//DTD XHTML 1.0 Transitional//EN\"
 
 (deftag <:&nbsp () (emit-princ "&nbsp;"))
 
+(deftag <:applet (&attribute code width height &body body)
+  (emit-open-tag "applet" `(("code" . ,code)
+                            ("width" . ,width)
+                            ("height" . ,height)))
+  (emit-body body)
+  (emit-close-tag "applet"))
+
+(deftag <:param (&attribute name value)
+  (emit-empty-tag "param" `(("name" . ,name)
+                            ("value" . ,value))))
+
 ;; Copyright (c) 2002-2005, Edward Marco Baringer
 ;; All rights reserved. 
 ;; 

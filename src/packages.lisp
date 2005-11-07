@@ -62,6 +62,8 @@
            #:p #:param #:pre #:q #:samp #:script #:select #:small #:span
            #:strong #:style #:sub #:sup #:table #:tbody #:td #:textarea #:tfoot           
            #:th #:thead #:title #:tr #:tt #:ul #:var
+           ;; Not really HTML4, but close enough
+           #:applet #:param #:marquee
            ;; YACLML extended HTML
            #:href #:stylesheet #:text #:submit #:image #:checkbox #:file
            #:as-is #:as-html #:call-with-yaclml-stream #:comment #:progn
