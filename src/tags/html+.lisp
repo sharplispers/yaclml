@@ -38,6 +38,18 @@ PUBLIC \"-//W3C//DTD XHTML 1.0 Transitional//EN\"
 
 (deftag <:&nbsp () (emit-princ "&nbsp;"))
 
+(def-html-tag <:marquee
+  width
+  height
+  direction
+  behaviour
+  scrolldelay
+  scrollamount
+  loop
+  bgcolor
+  hspace
+  vspace)
+
 (deftag <:applet (&attribute code width height &body body)
   (emit-open-tag "applet" `(("code" . ,code)
                             ("width" . ,width)
