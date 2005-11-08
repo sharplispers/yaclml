@@ -50,12 +50,7 @@ PUBLIC \"-//W3C//DTD XHTML 1.0 Transitional//EN\"
   hspace
   vspace)
 
-(deftag <:applet (&attribute code width height &body body)
-  (emit-open-tag "applet" `(("code" . ,code)
-                            ("width" . ,width)
-                            ("height" . ,height)))
-  (emit-body body)
-  (emit-close-tag "applet"))
+(def-html-tag <:applet code width height)
 
 (deftag <:param (&attribute name value)
   (emit-empty-tag "param" `(("name" . ,name)
