@@ -6,7 +6,7 @@
 
 ;;;; ** Helper macro fer defining the tag macros
 
-(eval-when (:compile-toplevel)
+(eval-when (:compile-toplevel :load-toplevel :execute)
   (defun make-effective-attributes (attributes)
     (with-collector (attrs)
       (dolist (attr attributes)
