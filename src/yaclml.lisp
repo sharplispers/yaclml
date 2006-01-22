@@ -131,10 +131,27 @@
    runtime."
   (setf %yaclml-code% (nconc forms %yaclml-code%)))
 
+(defun emit-attribute-value (value)
+  (if (listp value)
+      (iter (for el in value)
+            (with first = t)
+            (when el
+              (unless first
+                (princ " " *yaclml-stream*))
+              (princ el *yaclml-stream*))
+            (setf first nil))
+;TODO use this instead when iterate gets the first-time-p patch
+;      (iter (for el in value)
+;            (when el
+;              (unless (first-time-p)
+;                (princ " " *yaclml-stream*))
+;              (princ el *yaclml-stream*)))
+      (princ value *yaclml-stream*)))
+
 (defun emit-princ-attributes (attributes)
   "Assuming attributes is an alist of (name . value) pairs emit
    the code nesseccary to print them at runtime. If VALUE is a
-   list every element will concatenated to form the final string
+   list every element will be concatenated to form the final string
    value of the attribute.
 
 If the value of any of the attributes is NIL it will be ignored.
@@ -170,7 +187,7 @@ as the value."
                              ((nil) nil)
                              (t
                               (princ ,(concatenate 'string " " (princ-to-string key) "=\"") *yaclml-stream*)
-                              (princ ,v *yaclml-stream*)
+                              (emit-attribute-value ,v)
                               (princ "\"" *yaclml-stream*)))))))))))
 
 (defun emit-indentation ()
