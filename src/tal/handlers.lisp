@@ -51,11 +51,16 @@
   (read-tal-expression-from-string (first (cdr tag))))
 
 (def-tag-handler tal:include (tag)
-  (assert (getf (cdar tag) 'tal::name)
-	  (tag)
-	  "Missing required TAL:NAME attribute.")
-  (let ((template-name (getf (cdar tag) 'tal::name)))
-    (remf (cdar tag) 'tal::name)
+  (let (template-name)
+    (cond
+      ((getf (cdar tag) 'tal::name)
+       (setf template-name (getf (cdar tag) 'tal::name))
+       (remf (cdar tag) 'tal::name))
+      ((getf (cdar tag) 'tal::name-expression)
+       (setf template-name (parse-tal-attribute-value (getf (cdar tag) 'tal::name-expression)))
+       (remf (cdar tag) 'tal::name-expression))
+      (t
+       (error "Missing TAL:NAME and TAL:NAME-EXPRESSION tags.")))
     (with-collector (augmented-env)
       ;; 1) grab all the attribute params
       (loop
@@ -81,7 +86,10 @@
       (locally
           (declare (special *tal-truename*))
         (with-tal-compile-environment (generator)
-          `(funcall (load-tal ,generator ,(merge-pathnames template-name *tal-truename*))
+          `(funcall (load-tal ,generator ,(if (constantp template-name)
+                                              (merge-pathnames template-name *tal-truename*)
+                                              `(let ((tal-truename ,*tal-truename*))
+                                                 (merge-pathnames ,template-name tal-truename))))
                     (extend-environment (tal-env ,@(augmented-env)) tal-environment)
                     ,generator))))))
 
