@@ -63,7 +63,7 @@ in LIST after attribute parsing is complete."
                     `(progn
                        (push ,element-sym ,allow-other-attributes)
                        (push (pop ,list-sym) ,allow-other-attributes))
-                    `(error "Unrecognized attribute ~S." ,element-sym))))))
+                    `(error 'unrecognized-attribute :attribute ,element-sym))))))
          ,(when (null body-var)
             `(when ,list-sym
                (warn "Ignoring extra elements in body: ~S" ,list-sym)))
@@ -76,6 +76,14 @@ in LIST after attribute parsing is complete."
                     (eql 'declare (car (car body))))
                `((locally ,@body))
                body)))))
+
+(define-condition unrecognized-attribute (error)
+  ((attribute :accessor attribute :initarg :attribute)
+   (tag :accessor tag :initarg :tag :initform nil))
+  (:report (lambda (c s)
+             (if (tag c)
+                 (format s "Unrecognized attribute ~S." (attribute c))
+                 (format s "Unrecognized attribute ~S in ~S." (attribute c) (tag c))))))
 
 (defun parse-attribute-spec (attribute-spec)
   "Parse an attribute spec into required args, attribute args,
