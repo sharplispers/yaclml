@@ -274,8 +274,10 @@ will be executed at runtime."
     `(progn
        (setf (gethash ',name *expanders*)
              (lambda (,contents)
-               (attribute-bind ,attributes ,contents
-                 ,@body)))
+               (handler-bind ((unrecognized-attribute (lambda (c)
+                                                        (setf (tag c) ,contents))))
+                 (attribute-bind ,attributes ,contents
+                   ,@body))))
        (defmacro ,name (&rest contents)
          (let ((%yaclml-code% nil)
 	       (%yaclml-indentation-depth% 0))
@@ -302,10 +304,14 @@ forms which are recursivly processed."
                         (pop body)
                         nil)))
     `(progn
+       (setf (gethash ',name *expander-macros*)
+             (lambda (,contents)
+               (handler-bind ((unrecognized-attribute (lambda (c)
+                                                        (setf (tag c) ,contents))))
+                 (attribute-bind ,attributes ,contents
+                   ,@body))))
        (defmacro ,name (&rest ,contents) ,doc-string
-         (attribute-bind ,attributes ,contents ,@body))
-       (setf (gethash ',name *expander-macros*) (lambda (,contents)
-                                                  (attribute-bind ,attributes ,contents ,@body)))
+         (funcall (gethash ',name *expander-macros*) ,contents))
        ',name)))
 
 (defmacro def-simple-xtag (name)
