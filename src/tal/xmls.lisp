@@ -617,8 +617,5 @@ character translation."
 	(stream (etypecase s
 		  (string (make-string-input-stream s))
 		  (stream s))))
-    (declare (special *uri-to-package*))
-    (handler-case
-     (document (make-state :stream stream))
-     (end-of-file () nil)
-     (xml-parse-error () nil))))
+    (declare (special *uri-to-package*))    
+    (document (make-state :stream stream))))
