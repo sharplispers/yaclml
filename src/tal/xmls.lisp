@@ -62,7 +62,23 @@
 ;;; CONDITIONS
 ;;;-----------------------------------------------------------------------------
 (define-condition xml-parse-error (error) 
-  ((line :initarg :line :reader error-line)))
+  ((offset :accessor offset)))
+
+(define-condition unresovable-entity (xml-parse-error)
+  ((entity :initarg :entity :accessor entity))
+  (:report (lambda (c s)
+             (format s "Unable to resolve entity ~S at offset ~D." (entity c) (offset c)))))
+
+(define-condition reference-to-undeclared-namespace (xml-parse-error)
+  ((namespace :accessor namespace :initarg :namespace))
+  (:report (lambda (c s)
+             (format s  "Undeclared namespace ~S referenced." (namespace c)))))
+
+(define-condition unmatched-end-tag (xml-parse-error)
+  ((expected :accessor expected :initarg :expected)
+   (found :accessor found :initarg :found))
+  (:report (lambda (c s)
+             (format s "Unmatched end tag, found ~S and was expecting ~S." (found c) (expected c)))))
 
 ;;;-----------------------------------------------------------------------------
 ;;; NODE INTERFACE
@@ -181,7 +197,7 @@ internally encode strings in US-ASCII, ISO-8859-1 or UCS."
                 (parse-integer ent :start 2 :end (- (length ent) 1) :radix 16)
                 (parse-integer ent :start 1 :end (- (length ent) 1)))))
       (second (assoc ent *entities* :test #'string=))
-      (error "Unable to resolve entity ~S" ent)))
+      (error 'unresovable-entity :entity ent)))
 
 (declaim (inline peek-stream))
 (defun peek-stream (stream)
@@ -267,9 +283,9 @@ character translation."
   (declare (special uri-to-package))
   (if ns
       (or (cdr (assoc (or (lookup-namespace ns env)
-                          (error "Undeclared namespace ~S refernced." ns))
+                          (error 'reference-to-undeclared-namespace :namespace ns))
                       uri-to-package :test #'string=))
-          (error "Unrecognized namespace ~S referenced." ns))
+          (error 'reference-to-undeclared-namespace :namespace ns))
       *package*))
 
 (defun intern-xml-name (name ns env)
@@ -544,7 +560,7 @@ character translation."
                              (t (if (element-val c)
                                     (push (element-val c) children)))))))
        (or (eql (node-name elem) end-name)
-           (error "Unmatched end tag, found ~S and was expecting ~S." end-name (node-name elem)))))
+           (error 'unmatched-end-tag :found end-name :expected (node-name elem)))))
      ;; package up new node
      (progn
        (setf (node-children elem) (nreverse children))
