@@ -243,7 +243,8 @@
             (transform-lxml-form (it.bese.yaclml.xmls:parse string :uri-to-package *uri-to-package*)))))))
 
 (defun compile-tal-string (string &optional (expression-package (find-package :common-lisp-user)))
-  (compile nil (compile-tal-string-to-lambda string expression-package)))
+  (let ((*break-on-signals* t))
+    (compile nil (compile-tal-string-to-lambda string expression-package))))
 
 (defun compile-tal-file (pathname &optional (expression-package (find-package :common-lisp-user)))
   (let ((*tal-truename* (truename pathname)))
