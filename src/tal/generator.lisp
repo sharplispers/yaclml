@@ -53,8 +53,7 @@
         (when (or (not (cachep generator))
                   (< (tal-template.last-load-time template) file-write-date))
           (setf
-           (tal-template.function template) (let ((*break-on-signals* t))
-                                              (compile nil (preprocess-tal generator file-name)))
+           (tal-template.function template) (compile nil (preprocess-tal generator file-name))
            (tal-template.last-load-time template) file-write-date))
 	(funcall (tal-template.function template) environment generator)))))
 
