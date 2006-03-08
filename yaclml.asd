@@ -16,6 +16,7 @@
                                 :serial t
 				:components ((:file "html4")
 					     (:file "standard-yaclml")
+					     (:file "svg")
 					     (:file "html+"))
 				:depends-on ("yaclml"))
                                (:module :tal
