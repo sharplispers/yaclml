@@ -62,7 +62,12 @@
 ;;; CONDITIONS
 ;;;-----------------------------------------------------------------------------
 (define-condition xml-parse-error (error) 
-  ((offset :accessor offset)))
+  ((offset :accessor offset :initform nil :initarg :offset)
+   (message :accessor message :initform nil :initarg :message))
+  (:report (lambda (c s)
+             (if (message c)
+                 (format s (message c))
+                 (format s "XML-PARSE-ERROR at offset ~D." (offset c))))))
 
 (define-condition unresovable-entity (xml-parse-error)
   ((entity :initarg :entity :accessor entity))
@@ -260,10 +265,10 @@ character translation."
                           (standard-char `(char= ,m c))
                           (symbol `(,m c)))))))
 
-(defmacro must (&rest body)
+(defmacro must ((error-type &rest error-args) &rest body)
   "Throws a parse error if the supplied forms do not succeed."
   `(or (progn ,@body)
-    (error 'xml-parse-error)))
+       (error ',error-type ,@error-args)))
 
 ;;;-----------------------------------------------------------------------------
 ;;; PARSER INTERNAL FUNCTIONS
@@ -497,35 +502,37 @@ character translation."
 (defrule comment-or-cdata ()
   (and
    (peek #\!)
-   (must (or (comment s)
+   (must (xml-parse-error :offset (file-position (state-stream s)))
+         (or (comment s)
              (and
               (match-seq #\[ #\C #\D #\A #\T #\A #\[)
               (loop with data = (make-extendable-string 50)
-                    with state = 0
-                    do (case state
-                         (0 (if (match #\])
-                                (incf state)
-                                (push-string (eat) data)))
-                         (1 (if (match #\])
-                                (incf state)
-                                (progn 
-                                  (setf state 0)
-                                  (push-string #\] data)
-                                  (push-string (eat) data))))
-                         (2 (if (match #\>)
-                                (incf state)
-                                (progn 
-                                  (setf state 0)
-                                  (push-string #\] data)
-                                  (push-string #\] data)
-                                  (push-string (eat) data)))))
-                    until (eq state 3)
-                    finally (return (make-element :type 'cdata :val data))))))))
+                 with state = 0
+                 do (case state
+                      (0 (if (match #\])
+                             (incf state)
+                             (push-string (eat) data)))
+                      (1 (if (match #\])
+                             (incf state)
+                             (progn 
+                               (setf state 0)
+                               (push-string #\] data)
+                               (push-string (eat) data))))
+                      (2 (if (match #\>)
+                             (incf state)
+                             (progn 
+                               (setf state 0)
+                               (push-string #\] data)
+                               (push-string #\] data)
+                               (push-string (eat) data)))))
+                 until (eq state 3)
+                 finally (return (make-element :type 'cdata :val data))))))))
 
 (declaim (ftype function element))     ; forward decl for content rule
 (defrule content ()
   (if (match #\<)
-      (must (or (comment-or-cdata s)
+      (must (xml-parse-error :offset (file-position (state-stream s)))
+            (or (comment-or-cdata s)
                 (element s)
                 (end-tag s)))
       (or (let (content)
@@ -594,7 +601,8 @@ character translation."
    (peek #\!)
    (or (comment s)
        (and (not (state-got-doctype s))
-            (must (match-seq #\D #\O #\C #\T #\Y #\P #\E))
+            (must (xml-parse-error :offset (file-position (state-stream s)))
+                  (match-seq #\D #\O #\C #\T #\Y #\P #\E))
             (loop with level = 1
                   do (case (eat)
                        (#\> (decf level))
@@ -607,14 +615,16 @@ character translation."
 (defrule misc ()
   (or 
    (ws s)
-   (and (match #\<) (must (or (processing-instruction s)
+   (and (match #\<) (must (xml-parse-error :offset (file-position (state-stream s)))
+                          (or (processing-instruction s)
                               (comment-or-doctype s)
                               (element s))))))
 
 (defrule document ()
   (let (elem)
     (if (match #\<)
-        (must (or (processing-instruction-or-xmldecl s)
+        (must (xml-parse-error :offset (file-position (state-stream s)))
+              (or (processing-instruction-or-xmldecl s)
                   (comment-or-doctype s)
                   (setf elem (element s)))))
     (unless elem
@@ -633,5 +643,8 @@ character translation."
 	(stream (etypecase s
 		  (string (make-string-input-stream s))
 		  (stream s))))
-    (declare (special *uri-to-package*))    
-    (document (make-state :stream stream))))
+    (declare (special *uri-to-package*))
+    (handler-bind ((xml-parse-error (lambda (c)
+                                      (unless (offset c)
+                                        (setf (offset c) (file-position stream))))))
+      (document (make-state :stream stream)))))

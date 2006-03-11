@@ -21,7 +21,6 @@
           (t (attrs attr))))
       (attrs))))
 
-
 (defmacro def-empty-html-tag (name &rest attributes)
   "Define a tag that has `End Tag` set to Forbidden and `Empty`
 set to Empty according to:

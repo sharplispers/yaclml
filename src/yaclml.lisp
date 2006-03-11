@@ -123,7 +123,7 @@
   (dolist (item items %yaclml-code%)
     (if (yaclml-constant-p item)
         (push (escape-as-html (princ-to-string item)) %yaclml-code%)
-        (push `(princ (escape-as-html (princ-to-string ,item)) *yaclml-stream*) %yaclml-code%))))
+        (push `(write-as-html (princ-to-string ,item) :stream *yaclml-stream*) %yaclml-code%))))
   
 (defun emit-code (&rest forms)
   "Emit to the current yaclml-code CODE. This means that whatever
