@@ -327,13 +327,41 @@ and just wrap the body in an xml tag."
 
 (defmacro wrap-in-tag ((tag-name &rest tag-attributes) &body body)
   (with-unique-names (tname)
-    `(let ((,tname ,tag-name))
+    `(let ((,tname ,(string-downcase (string tag-name))))
        (emit-open-tag ,tname (list ,@(loop
                                         for (k v) on tag-attributes by #'cddr
                                         collect `(cons ,k ,v))))
        (prog1
-           (progn ,@body)
+          (progn ,@body)
          (emit-close-tag ,tname)))))
+
+(set-dispatch-macro-character #\# #\<
+  #'(lambda(s c n)
+      (let* ((list (read s nil (values) t)) ; UNCOMMENT THIS IF YOU PREFER #<(tag :attr 1)
+;      (let* ((list (read-delimited-list #\> s t)) ; UNCOMMENT THIS IF YOU PREFER #<tag :attr 1 >
+             (tag-name (string-downcase (string (car list))))
+             (%yaclml-code% nil)
+             (%yaclml-indentation-depth% 0))
+        (declare (special %yaclml-code%))
+        (attribute-bind
+            (&allow-other-attributes other-attributes &body body)
+            (cdr list)
+          (let ((emittable-attributes
+                 (iter (for attribute on other-attributes by 'cddr)
+                       (collect (cons (first attribute) (second attribute))))))
+            (if body
+                (progn
+                  (emit-open-tag tag-name emittable-attributes)
+                  (emit-body body)
+                  (emit-close-tag tag-name))
+                (emit-empty-tag tag-name emittable-attributes))))
+        (setf %yaclml-code% (nreverse %yaclml-code%))
+        `(progn
+          ,@(mapcar
+             (lambda (form)
+               (if (stringp form) `(write-string ,form *yaclml-stream*) form))
+             (fold-strings %yaclml-code%))
+          nil))))
 
 ;; Copyright (c) 2002-2005, Edward Marco Baringer
 ;; All rights reserved. 
