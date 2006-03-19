@@ -1,13 +1,13 @@
 ;; -*- lisp -*-
 
-(in-package :it.bese.yaclml)
+(in-package :it.bese.yaclml.svg)
 
 ;;;; * YACLML tags mapping to SVG tags.
 
 ;;;; ** Helper macro fer defining the tag macros
 
 (defmacro def-svg-tag (name &rest attributes)
-  (let ((effective-attributes (make-effective-attributes attributes)))
+  (let ((effective-attributes attributes))
   `(deftag ,name (&attribute ,@effective-attributes &body body)
      (emit-open-tag ,(string-downcase (symbol-name name))
                     (list ,@(mapcar (lambda (attr)
@@ -16,29 +16,46 @@
      (emit-body body)
      (emit-close-tag ,(string-downcase (symbol-name name))))))
 
-(def-svg-tag <:svg
+(def-svg-tag svg
              xmlns)
 
-(def-svg-tag <:g)
+(def-svg-tag g)
 
-(def-svg-tag <:path
+(def-svg-tag path
              d
              fill
              stroke
              stroke-width)
 
-(def-svg-tag <:rect
+(def-svg-tag rect
              x
              y
+             rx
+             ry
              width
              height
              fill
              stroke
              stroke-width)
 
-(def-svg-tag <:polygon
+(def-svg-tag circle
+             cx
+             cy
+             r
+             stroke
+             stroke-width
+             fill)
+
+(def-svg-tag polygon
              points
              fill)
+
+(def-svg-tag text
+             x
+             y
+             style
+             font
+             color)
 
 ;; Copyright (c) 2002-2005, Edward Marco Baringer
 ;; All rights reserved. 

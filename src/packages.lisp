@@ -67,9 +67,13 @@
            ;; YACLML extended HTML
            #:href #:stylesheet #:text #:submit #:image #:checkbox #:file
            #:as-is #:as-html #:call-with-yaclml-stream #:comment #:progn
-	   #:&nbsp
-           ;; SVG, here?
-           #:svg #:g #:path #:rect #:polygon))
+	   #:&nbsp))
+
+(defpackage :it.bese.yaclml.svg
+  (:use :cl :it.bese.yaclml)
+  (:documentation "SVG library.")
+  (:nicknames :svg :<svg)
+  (:export #:svg #:g #:path #:rect #:circle #:polygon #:text))
 
 (defpackage :it.bese.yaclml.tal
   (:use)
