@@ -337,8 +337,9 @@ and just wrap the body in an xml tag."
 
 (set-dispatch-macro-character #\# #\<
   #'(lambda(s c n)
-      (let* ((list (read s nil (values) t)) ; UNCOMMENT THIS IF YOU PREFER #<(tag :attr 1)
-;      (let* ((list (read-delimited-list #\> s t)) ; UNCOMMENT THIS IF YOU PREFER #<tag :attr 1 >
+;      (let* ((list (read s nil (values) t)) ; UNCOMMENT THIS IF YOU PREFER #<(tag :attr 1)
+      (set-syntax-from-char #\> #\) ) ; UNCOMMENT THIS IF YOU PREFER #<tag :attr 1>
+      (let* ((list (read-delimited-list #\> s t)) ; UNCOMMENT THIS IF YOU PREFER #<tag :attr 1 >
              (tag-name (string-downcase (string (car list))))
              (%yaclml-code% nil)
              (%yaclml-indentation-depth% 0))
@@ -348,7 +349,8 @@ and just wrap the body in an xml tag."
             (cdr list)
           (let ((emittable-attributes
                  (iter (for attribute on other-attributes by 'cddr)
-                       (collect (cons (first attribute) (second attribute))))))
+                       (collect (cons (string-downcase (string (first attribute)))
+                                      (second attribute))))))
             (if body
                 (progn
                   (emit-open-tag tag-name emittable-attributes)
