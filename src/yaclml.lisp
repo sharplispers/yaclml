@@ -335,35 +335,105 @@ and just wrap the body in an xml tag."
           (progn ,@body)
          (emit-close-tag ,tname)))))
 
-(set-dispatch-macro-character #\# #\<
-  #'(lambda(s c n)
-;      (let* ((list (read s nil (values) t)) ; UNCOMMENT THIS IF YOU PREFER #<(tag :attr 1)
-      (set-syntax-from-char #\> #\) ) ; UNCOMMENT THIS IF YOU PREFER #<tag :attr 1>
-      (let* ((list (read-delimited-list #\> s t)) ; UNCOMMENT THIS IF YOU PREFER #<tag :attr 1 >
-             (tag-name (string-downcase (string (car list))))
-             (%yaclml-code% nil)
-             (%yaclml-indentation-depth% 0))
-        (declare (special %yaclml-code%))
-        (attribute-bind
-            (&allow-other-attributes other-attributes &body body)
-            (cdr list)
-          (let ((emittable-attributes
-                 (iter (for attribute on other-attributes by 'cddr)
-                       (collect (cons (string-downcase (string (first attribute)))
-                                      (second attribute))))))
-            (if body
-                (progn
-                  (emit-open-tag tag-name emittable-attributes)
-                  (emit-body body)
-                  (emit-close-tag tag-name))
-                (emit-empty-tag tag-name emittable-attributes))))
-        (setf %yaclml-code% (nreverse %yaclml-code%))
-        `(progn
-          ,@(mapcar
-             (lambda (form)
-               (if (stringp form) `(write-string ,form *yaclml-stream*) form))
-             (fold-strings %yaclml-code%))
-          nil))))
+(defvar *original-reader-enter*)
+
+(defvar *original-reader-exit*)
+
+(defvar *xml-reader-open-char* #\<)
+
+(defvar *xml-reader-close-char* #\>)
+
+(defvar *restore-xml-reader-syntax* nil)
+
+(defmacro disable-xml-reader-syntax ()
+  "Turns off the XML reader syntax setting the syntax state such
+that if the syntax is subsequently enabled,
+RESTORE-XML-READER-SYNTAX will disable it again."
+  '(eval-when (:compile-toplevel :load-toplevel :execute)
+    (setf *restore-xml-reader-syntax* nil)
+    (%disable-xml-reader-syntax)))
+
+(defmacro locally-disable-xml-reader-syntax ()
+  "Turns off the XML reader syntax without changing the syntax
+state such that RESTORE-XML-READER-SYNTAX will re-establish
+the current syntax state."
+  '(eval-when (:compile-toplevel :load-toplevel :execute)
+    (%disable-xml-reader-syntax)))
+
+(defmacro enable-xml-reader-syntax ()
+  "Turns on the XML reader syntax setting the syntax state such
+that if the syntax is subsequently disabled,
+RESTORE-XML-READER-SYNTAX will enable it again."
+  '(eval-when (:compile-toplevel :load-toplevel :execute)
+    (setf *restore-xml-reader-syntax* t)
+    (%enable-xml-reader-syntax)))
+
+(defmacro locally-enable-xml-reader-syntax ()
+  "Turns on the XML reader syntax without changing the syntax
+state such that RESTORE-XML-READER-SYNTAX will re-establish
+the current syntax state."
+  '(eval-when (:compile-toplevel :load-toplevel :execute)
+    (%enable-xml-reader-syntax)))
+
+(defun %enable-xml-reader-syntax ()
+  (unless (boundp '*original-reader-enter*)
+    (setf *original-reader-enter* (get-macro-character *xml-reader-open-char*)))
+  (set-macro-character *xml-reader-open-char* #'xml-reader-open)
+  (unless (boundp '*original-reader-exit*)
+    (setf *original-reader-exit* (get-macro-character *xml-reader-close-char*)))
+  (set-macro-character *xml-reader-close-char* (get-macro-character #\)))
+  (values))
+
+(defun %disable-xml-reader-syntax ()
+  (when (boundp '*original-reader-enter*)
+    (set-macro-character *xml-reader-open-char* *original-reader-enter*))
+  (makunbound '*original-reader-enter*)
+  (when (boundp '*original-reader-exit*)
+    (set-macro-character *xml-reader-close-char* *original-reader-exit*))
+  (makunbound '*original-reader-exit*)
+  (values))
+
+(defmacro restore-xml-reader-syntax ()
+  "Enables the XML reader syntax if ENABLE-XML-READER-SYNTAX has
+been called more recently than DISABLE-XML-READER-SYNTAX and
+otherwise disables the XML reader syntax. By default, the XML
+reader syntax is disabled."
+  '(eval-when (:compile-toplevel :load-toplevel :execute)
+    (if *restore-xml-reader-syntax*
+        (%enable-xml-reader-syntax)
+        (%disable-xml-reader-syntax))))
+
+(defun xml-reader-open (s c)
+  "Emit XML elements into *yaclml-stream*, use keyword parameters for attributes and rest parameters for nested XML elements or normal lisp code."
+  (let ((ch (read-char s)))
+    (unread-char ch s)
+    (if (eql ch #\Space)
+        '<
+        (let* ((list (read-delimited-list #\> s t))
+               (tag-name (string-downcase (string (car list))))
+               (%yaclml-code% nil)
+               (%yaclml-indentation-depth% 0))
+          (declare (special %yaclml-code%))
+          (attribute-bind
+              (&allow-other-attributes other-attributes &body body)
+              (cdr list)
+            (let ((emittable-attributes
+                   (iter (for attribute on other-attributes by 'cddr)
+                         (collect (cons (string-downcase (string (first attribute)))
+                                        (second attribute))))))
+              (if body
+                  (progn
+                    (emit-open-tag tag-name emittable-attributes)
+                    (emit-body body)
+                    (emit-close-tag tag-name))
+                  (emit-empty-tag tag-name emittable-attributes))))
+          (setf %yaclml-code% (nreverse %yaclml-code%))
+          `(progn
+            ,@(mapcar
+               (lambda (form)
+                 (if (stringp form) `(write-string ,form *yaclml-stream*) form))
+               (fold-strings %yaclml-code%))
+            nil)))))
 
 ;; Copyright (c) 2002-2005, Edward Marco Baringer
 ;; All rights reserved. 

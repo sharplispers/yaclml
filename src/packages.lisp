@@ -24,6 +24,11 @@
            #:with-yaclml-stream
            #:enable-yaclml-syntax
            #:disable-yaclml-syntx
+           #:enable-xml-reader-syntax
+           #:disable-xml-reader-syntax
+           #:locally-enable-xml-reader-syntax
+           #:locally-disable-xml-reader-syntax
+           #:restore-xml-reader-syntax
 	   #:*yaclml-stream*
 	   #:*yaclml-indent*
            ;; tal
