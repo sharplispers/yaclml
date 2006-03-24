@@ -404,7 +404,10 @@ reader syntax is disabled."
         (%disable-xml-reader-syntax))))
 
 (defun xml-reader-open (s c)
-  "Emit XML elements into *yaclml-stream*, use keyword parameters for attributes and rest parameters for nested XML elements or normal lisp code."
+  "Emit XML elements into *yaclml-stream*, use keyword parameters
+for attributes and rest parameters for nested XML elements or
+normal lisp code."
+  (declare (ignore c))
   (let ((ch (read-char s)))
     (unread-char ch s)
     (if (eql ch #\Space)
@@ -434,6 +437,12 @@ reader syntax is disabled."
                  (if (stringp form) `(write-string ,form *yaclml-stream*) form))
                (fold-strings %yaclml-code%))
             nil)))))
+
+(defun with-xml-syntax ()
+  (lambda (handler)
+    (set-macro-character *xml-reader-open-char* #'xml-reader-open)
+    (set-macro-character *xml-reader-close-char* (get-macro-character #\)))
+    `(progn ,@(funcall handler))))
 
 ;; Copyright (c) 2002-2005, Edward Marco Baringer
 ;; All rights reserved. 
