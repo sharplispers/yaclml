@@ -58,6 +58,13 @@
     ("quot;" #\")
     ("nbsp;" #\Space)))
 
+(defvar *convert-entites* nil
+  "When true we convert entites found in the data to their
+  corresponding chars, when false we leave ignore entities. NB:
+  in the current implementation we are only able to convert a
+  limited subset of all entities (see *entities* for the complete
+  listing).")
+
 ;;;-----------------------------------------------------------------------------
 ;;; CONDITIONS
 ;;;-----------------------------------------------------------------------------
@@ -211,15 +218,17 @@ character translation."
   (peek-char nil stream nil))
 
 (defun read-stream (stream)
-  "Reads a character from the stream, translating entities as it goes."
+  "Reads a character from the stream, translating entities as it
+goes (assuming *convert-entites* is non-NIL)."
   (let ((c (read-char stream nil)))
-    (if (and c (not (char= c #\&)))
+    (if (or (not (char= c #\&))
+            (not *convert-entites*))
         c
         (loop with ent = (make-extendable-string 5)
-              for char = (read-char stream)
-              do (push-string char ent)
-              until (char= char #\;)
-              finally (return (resolve-entity (coerce ent 'simple-string)))))))
+           for char = (read-char stream)
+           do (push-string char ent)
+           until (char= char #\;)
+           finally (return (resolve-entity (coerce ent 'simple-string)))))))
 
 (define-symbol-macro next-char (peek-stream (state-stream s)))
 
