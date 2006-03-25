@@ -58,7 +58,7 @@
     ("quot;" #\")
     ("nbsp;" #\Space)))
 
-(defvar *convert-entites* nil
+(defvar *convert-entites* t
   "When true we convert entites found in the data to their
   corresponding chars, when false we leave ignore entities. NB:
   in the current implementation we are only able to convert a
