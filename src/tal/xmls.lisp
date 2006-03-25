@@ -40,7 +40,9 @@
            #:node-attrs
            #:node-children
            #:make-node
-           #:parse))
+           #:parse
+           #:*entities*
+           #:*convert-entities*))
 
 (in-package :it.bese.yaclml.xmls)
 
@@ -58,8 +60,8 @@
     ("quot;" #\")
     ("nbsp;" #\Space)))
 
-(defvar *convert-entites* t
-  "When true we convert entites found in the data to their
+(defvar *convert-entities* t
+  "When true we convert entities found in the data to their
   corresponding chars, when false we leave ignore entities. NB:
   in the current implementation we are only able to convert a
   limited subset of all entities (see *entities* for the complete
@@ -219,10 +221,10 @@ character translation."
 
 (defun read-stream (stream)
   "Reads a character from the stream, translating entities as it
-goes (assuming *convert-entites* is non-NIL)."
+goes (assuming *convert-entities* is non-NIL)."
   (let ((c (read-char stream nil)))
     (if (or (not (char= c #\&))
-            (not *convert-entites*))
+            (not *convert-entities*))
         c
         (loop with ent = (make-extendable-string 5)
            for char = (read-char stream)
