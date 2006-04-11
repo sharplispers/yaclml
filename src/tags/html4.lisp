@@ -450,7 +450,8 @@ http://www.w3.org/TR/xhtml1/#guidelines"
 (def-html-tag <:embed
               src
               width
-              height)
+              height
+              type)
 
 ;; Copyright (c) 2002-2005, Edward Marco Baringer
 ;; All rights reserved. 
