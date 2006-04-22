@@ -45,6 +45,18 @@ http://www.w3.org/TR/xhtml1/#guidelines"
      (emit-body body)
      (emit-close-tag ,(string-downcase (symbol-name name))))))
 
+(defun href (base &rest params)
+  (with-output-to-string (href)
+    (write-string base href)
+    (when params
+      (write-char #\? href)
+      (loop
+	 for (key value . rest) on params by #'cddr
+	 do (arnesi:write-as-uri (princ-to-string key) href)
+	 do (write-char #\= href)
+	 do (arnesi:write-as-uri (princ-to-string value) href)
+	 when rest
+	 do (write-char #\& href)))))
 
 ;;;; * All HTML4 tags
 
