@@ -52,7 +52,11 @@
            #:extend-environment
            #:add-binding
            #:lookup-tal-variable
-           #:tal-env))
+           #:tal-env
+
+	   #:deftag
+	   
+	   ))
 
 (defpackage :it.bese.yaclml.tags
   (:nicknames :<)
@@ -73,13 +77,9 @@
            ;; YACLML extended HTML
            #:href #:stylesheet #:text #:submit #:image #:checkbox #:file
            #:as-is #:as-html #:call-with-yaclml-stream #:comment #:progn
-	   #:&nbsp))
-
-(defpackage :it.bese.yaclml.svg
-  (:use :cl :it.bese.yaclml)
-  (:documentation "SVG library.")
-  (:nicknames :svg :<svg)
-  (:export #:svg #:g #:path #:rect #:circle #:polygon #:text))
+	   #:&nbsp
+           ;; SVG, here?
+           #:svg #:g #:path #:rect #:polygon))
 
 (defpackage :it.bese.yaclml.tal
   (:use)
