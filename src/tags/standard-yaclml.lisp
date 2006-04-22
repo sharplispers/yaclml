@@ -11,6 +11,14 @@
   (dolist (txt text)
     (emit-html txt)))
 
+(deftag <:ah (&body text)
+  (dolist (txt text)
+    (emit-html txt)))
+
+(deftag <:ai (&body text)
+  (dolist (txt text)
+    (emit-html txt)))
+
 (deftag <:as-is (&body text)
   (dolist (txt text)
     (emit-princ txt)))
