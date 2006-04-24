@@ -17,7 +17,7 @@
 
 (deftag <:ai (&body text)
   (dolist (txt text)
-    (emit-html txt)))
+    (emit-princ txt)))
 
 (deftag <:as-is (&body text)
   (dolist (txt text)
