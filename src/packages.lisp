@@ -78,16 +78,45 @@
            #:href #:stylesheet #:text #:submit #:image #:checkbox #:file
            #:as-is #:as-html #:call-with-yaclml-stream #:comment #:progn
 	   #:&nbsp
-           ;; SVG, here?
-           #:svg #:g #:path #:rect #:polygon
 	   ;; yaclml+ (shortcuts)
 	   #:ah #:ai))
+
+;; these two are temporary dummy packages that take care the svg tags below don't signal an error.
+;; because of symbol names and xml format incompatibilities.
+
+(defpackage :xml
+  (:export
+   #:base
+   #:lang
+   #:space))
+
+(defpackage :xlink
+  (:export
+   #:type
+   #:href
+   #:role
+   #:arcrole
+   #:title
+   #:show
+   #:actuate))
 
 (defpackage :it.bese.yaclml.svg
   (:use :cl :it.bese.yaclml)
   (:documentation "SVG library.")
   (:nicknames :svg :<svg)
-  (:export #:svg #:g #:path #:rect #:circle #:polygon #:text))
+  (:export #:altGlyph #:altGlyphDef #:altGlyphItem #:a #:animate #:animateMotion
+           #:animateColor #:animateTransform #:circle #:color-profile #:clipPath
+           #:cursor #:defs #:desc #:definition-src #:ellipse #:filter #:feBlend
+           #:feColorMatrix #:feComponentTransfer #:feComposite #:feConvolveMatrix
+           #:feDiffuseLighting #:feDisplacementMap #:feFlood #:feGaussianBlur #:feImage
+           #:feMerge #:feMergeNode #:feMorphology #:feOffset #:feSpecularLighting
+           #:feTile #:feTurbulence #:feDistantLight #:fePointLight #:feSpotLight
+           #:feFuncR #:feFuncG #:feFuncB #:feFuncA #:font #:font-face #:font-face-src
+           #:font-face-uri #:font-face-format #:font-face-name #:foreignObject #:g
+           #:glyphRef #:glyph #:hkern #:image #:line #:linearGradient #:metadata #:marker
+           #:mask #:mpath #:missing-glyph #:path #:polyline #:polygon #:pattern #:rect
+           #:radialGradient #:svg #:svg-symbol #:switch #:style #:stop #:script #:svg-set #:title
+           #:text #:tspan #:tref #:textPath #:use #:view #:vkern))
 
 (defpackage :it.bese.yaclml.tal
   (:use)
