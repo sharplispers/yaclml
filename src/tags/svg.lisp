@@ -1922,6 +1922,13 @@
              xml:base
              xml:lang
              xml:space
+             font-family
+             font-size
+             font-size-adjust
+             font-stretch
+             font-style
+             font-variant
+             font-weight
              fill
              fill-rule
              stroke
