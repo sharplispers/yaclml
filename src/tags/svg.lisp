@@ -1472,6 +1472,9 @@
              stroke-linejoin
              stroke-miterlimit
              stroke-width
+             marker-start
+             marker-mid
+             marker-end
              color
              color-interpolation
              color-rendering
