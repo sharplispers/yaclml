@@ -356,39 +356,6 @@ are restored. Please note that it is a compile-time state and has no effects at 
         (set-macro-character *xml-reader-open-char* (car *original-xml-reader-handlers*))
         (set-macro-character *xml-reader-close-char* (cdr *original-xml-reader-handlers*))))))
 
-(defun generate-xml-reader-syntax-body (list &optional called-from-reader)
-  (let* ((tag-name (string-downcase (string (car list))))
-         (%yaclml-code% nil)
-         (%yaclml-indentation-depth% 0))
-    (unless called-from-reader
-      (setf tag-name (subseq tag-name 1))
-      (setf list (but-tail list)))
-    (attribute-bind
-        (&allow-other-attributes other-attributes &body body)
-        (cdr list)
-      (let ((emittable-attributes
-             (iter (for attribute on other-attributes by 'cddr)
-                   (collect (cons (string-downcase (string (first attribute)))
-                                  (second attribute))))))
-        (if body
-            (progn
-              (emit-open-tag tag-name emittable-attributes)
-              (emit-body body)
-              (emit-close-tag tag-name))
-            (emit-empty-tag tag-name emittable-attributes))))
-    (setf %yaclml-code% (nreverse %yaclml-code%))
-    `(progn
-      ,@(mapcar
-         (lambda (form)
-           (if (stringp form) `(write-string ,form *yaclml-stream*) form))
-         (fold-strings %yaclml-code%))
-      nil)))
-
-(defmacro with-xml-syntax (&body body)
-  "Enable xml reader syntax in the body. Please note that it's a compile-time state!
-See enable-xml-reader-syntax for more info."
-  (generate-xml-reader-syntax-body body))
-
 (defun xml-reader-open (s c)
   "Emit XML elements into *yaclml-stream*, use keyword parameters
 for attributes and rest parameters for nested XML elements or
@@ -398,7 +365,36 @@ normal lisp code."
     (unread-char ch s)
     (if (eql ch #\Space)
         '<
-        (generate-xml-reader-syntax-body (read-delimited-list #\> s t) t))))
+        (let* ((list (read-delimited-list #\> s t))
+               (tag-name (string-downcase (string (car list))))
+               (%yaclml-code% nil)
+               (%yaclml-indentation-depth% 0))
+          (attribute-bind
+              (&allow-other-attributes other-attributes &body body)
+              (cdr list)
+            (let ((emittable-attributes
+                   (iter (for attribute on other-attributes by 'cddr)
+                         (collect (cons (string-downcase (string (first attribute)))
+                                        (second attribute))))))
+              (if body
+                  (progn
+                    (emit-open-tag tag-name emittable-attributes)
+                    (emit-body body)
+                    (emit-close-tag tag-name))
+                  (emit-empty-tag tag-name emittable-attributes))))
+          (setf %yaclml-code% (nreverse %yaclml-code%))
+          `(progn
+            ,@(mapcar
+               (lambda (form)
+                 (if (stringp form) `(write-string ,form *yaclml-stream*) form))
+               (fold-strings %yaclml-code%))
+            nil)))))
+
+(defun with-xml-syntax ()
+  (lambda (handler)
+    (set-macro-character *xml-reader-open-char* #'xml-reader-open)
+    (set-macro-character *xml-reader-close-char* (get-macro-character #\)))
+    `(progn ,@(funcall handler))))
 
 ;; Copyright (c) 2002-2005, Edward Marco Baringer
 ;; All rights reserved. 
