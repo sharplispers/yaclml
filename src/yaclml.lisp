@@ -134,19 +134,13 @@
 (defun emit-attribute-value (value)
   (if (listp value)
       (iter (for el in value)
-            (with first = t)
             (when el
-              (unless first
+              (unless (first-time-p)
                 (princ " " *yaclml-stream*))
-              (princ el *yaclml-stream*))
-            (setf first nil))
-;TODO use this instead when iterate gets the first-time-p patch
-;      (iter (for el in value)
-;            (when el
-;              (unless (first-time-p)
-;                (princ " " *yaclml-stream*))
-;              (princ el *yaclml-stream*)))
-      (princ value *yaclml-stream*)))
+              (princ el *yaclml-stream*)))
+      (princ (if (stringp value)
+                 (escape-as-html value)
+                 value) *yaclml-stream*)))
 
 (defun emit-princ-attributes (attributes)
   "Assuming attributes is an alist of (name . value) pairs emit
@@ -167,7 +161,10 @@ as the value."
        (emit-princ " " key "=\"" key "\""))
       ((eql nil value) nil)
       ((yaclml-constant-p value)
-       (emit-princ " " key "=\"" value "\""))
+       (progn
+         (emit-princ " " key "=\"")
+         (emit-html value)
+         (emit-princ "\"")))
       (t
        (if (and (consp value)
                 (eql 'cl:concatenate (first value))
