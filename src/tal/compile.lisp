@@ -110,7 +110,7 @@
   (declare (ignore char))
   `(lookup-tal-variable ',(read stream) tal-environment))
 
-(defun read-tal-expression-from-string (expression)
+(defun read-tal-expression-from-string (expression &optional implicit-progn-p)
   "Reads a single form from the string EXPRESSION using the TAL
  expression read table."
   (assert *expression-package*
@@ -121,7 +121,16 @@
     ;; use $SYMBOL to access the value of the environment variable
     ;; SYMBOL
     (set-macro-character #\$ #'|$ tal reader| nil *readtable*)
-    (read-from-string expression)))
+    (if implicit-progn-p
+        (iter (with pos = 0)
+              (for (values obj new-pos) = (read-from-string expression nil nil :start pos))
+              (while obj)
+              (setf pos new-pos)
+              (collect obj into result)
+              (finally (return (if (> (length result) 1)
+                                   (cons 'progn result)
+                                   (first result)))))
+        (read-from-string expression))))
 
 (defun parse-tal-attribute-value (value-string)
   "Parser a TAL attribute expression, returns a form for building
