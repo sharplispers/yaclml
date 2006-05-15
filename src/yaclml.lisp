@@ -332,29 +332,18 @@ and just wrap the body in an xml tag."
           (progn ,@body)
          (emit-close-tag ,tname)))))
 
-(defparameter *original-xml-reader-handlers* nil)
-(defparameter *xml-reader-syntax-nesting-count* 0)
 (defvar *xml-reader-open-char* #\<)
 (defvar *xml-reader-close-char* #\>)
 
 (defmacro enable-xml-syntax ()
-  "Enable xml reader syntax (an example: <foo :attribute \"bar\" (call lisp code) >).
-Nesting is allowed, when the last disable is encountered then the original handlers
-are restored. Please note that it is a compile-time state and has no effects at runtime!"
+  "Enable xml reader syntax for the file being compiled or loaded.
+An example for the syntax: <foo :attribute \"bar\" (call lisp code) >)
+You may want to use (enable-bracket-reader) and {with-xml-syntax
+<foo :attr \"bar\" (lisp) >}"
   '(eval-when (:compile-toplevel)
-    (when (= *xml-reader-syntax-nesting-count* 0)
-      (setf *original-xml-reader-handlers* (cons (get-macro-character *xml-reader-open-char*)
-                                                 (get-macro-character *xml-reader-close-char*)))
-      (set-macro-character *xml-reader-open-char* #'xml-reader-open)
-      (set-macro-character *xml-reader-close-char* (get-macro-character #\))))
-    (incf *xml-reader-syntax-nesting-count*)))
-
-(defmacro disable-xml-syntax ()
-  '(eval-when (:compile-toplevel)
-    (when (> *xml-reader-syntax-nesting-count* 0)
-      (when (= (decf *xml-reader-syntax-nesting-count*) 0)
-        (set-macro-character *xml-reader-open-char* (car *original-xml-reader-handlers*))
-        (set-macro-character *xml-reader-close-char* (cdr *original-xml-reader-handlers*))))))
+    (setf *readtable* (copy-readtable *readtable*))
+    (set-macro-character *xml-reader-open-char* #'xml-reader-open nil *readtable*)
+    (set-syntax-from-char *xml-reader-close-char* #\) *readtable*)))
 
 (defun xml-reader-open (s c)
   "Emit XML elements into *yaclml-stream*, use keyword parameters
