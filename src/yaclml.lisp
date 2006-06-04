@@ -347,7 +347,7 @@ and just wrap the body in an xml tag."
 An example for the syntax: <foo :attribute \"bar\" (call lisp code) >)
 You may want to use (enable-bracket-reader) and {with-xml-syntax
 <foo :attr \"bar\" (lisp) >}"
-  '(eval-when (:compile-toplevel)
+  '(eval-when (:compile-toplevel :execute)
     (setf *readtable* (copy-readtable *readtable*))
     (set-macro-character *xml-reader-open-char* #'xml-reader-open nil *readtable*)
     (set-syntax-from-char *xml-reader-close-char* #\) *readtable*)))
