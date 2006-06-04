@@ -22,6 +22,7 @@
            #:deftag-macro
            ;; using yaclml
            #:with-yaclml-stream
+           #:with-yaclml-output-to-string
            #:enable-yaclml-syntax
            #:disable-yaclml-syntx
            #:enable-xml-syntax

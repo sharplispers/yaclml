@@ -86,6 +86,13 @@
      (declare (special *yaclml-stream*))
      ,@body))
 
+(defmacro with-yaclml-output-to-string (&body body)
+  "Evaluate BODY with *yaclml-stream* bound to a string stream, return the string."
+  `(let ((str (make-string-output-stream)))
+    (with-yaclml-stream str
+      ,@body)
+    (get-output-stream-string str)))
+
 (defvar %yaclml-code% nil
   "The list of currently collected code this yaclml macro should
    expand into.")
