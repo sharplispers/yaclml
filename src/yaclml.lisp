@@ -362,7 +362,10 @@ normal lisp code."
     (if (eql ch #\Space)
         '<
         (let* ((list (read-delimited-list #\> s t))
-               (tag-name (string-downcase (string (car list))))
+               (head (car list))
+               (tag-name (string-downcase (string (if (consp head)
+                                                      (eval head)
+                                                      head))))
                (%yaclml-code% nil)
                (%yaclml-indentation-depth% 0))
           (attribute-bind
