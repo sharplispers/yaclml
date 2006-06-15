@@ -361,33 +361,49 @@ normal lisp code."
     (unread-char ch s)
     (if (eql ch #\Space)
         '<
-        (let* ((list (read-delimited-list #\> s t))
-               (head (car list))
-               (tag-name (string-downcase (string (if (consp head)
-                                                      (eval head)
-                                                      head))))
-               (%yaclml-code% nil)
-               (%yaclml-indentation-depth% 0))
-          (attribute-bind
-              (&allow-other-attributes other-attributes &body body)
-              (cdr list)
-            (let ((emittable-attributes
-                   (iter (for attribute on other-attributes by 'cddr)
-                         (collect (cons (string-downcase (string (first attribute)))
-                                        (second attribute))))))
-              (if body
-                  (progn
-                    (emit-open-tag tag-name emittable-attributes)
-                    (emit-body body)
-                    (emit-close-tag tag-name))
-                  (emit-empty-tag tag-name emittable-attributes))))
-          (setf %yaclml-code% (nreverse %yaclml-code%))
-          `(progn
-            ,@(mapcar
-               (lambda (form)
-                 (if (stringp form) `(write-string ,form *yaclml-stream*) form))
-               (fold-strings %yaclml-code%))
-            nil)))))
+        (flet ((writer (form)
+                 (if (stringp form)
+                     `(write-string ,form *yaclml-stream*)
+                     form)))
+          (let* ((list (read-delimited-list #\> s t))
+                 (head (car list))
+                 (tag-name (string-downcase (string (if (consp head)
+                                                        (eval head)
+                                                        head))))
+                 (%yaclml-code% nil)
+                 (%yaclml-indentation-depth% 0))
+            (attribute-bind
+                (&allow-other-attributes other-attributes &body body)
+                (cdr list)
+              (let* ((protect nil)
+                     (emittable-attributes
+                      (iter (for attribute on other-attributes by 'cddr)
+                            (if (eq (first attribute) :with-unwind-protect)
+                                (setf protect (second attribute))
+                                (collect (cons (string-downcase (string (first attribute)))
+                                               (second attribute)))))))
+                (if body
+                    (progn
+                      (emit-open-tag tag-name emittable-attributes)
+                      (if protect
+                          (let ((body-code)
+                                (close-code))
+                            (let ((%yaclml-code% '()))
+                              (emit-body body)
+                              (setf body-code %yaclml-code%))
+                            (let ((%yaclml-code% '()))
+                              (emit-close-tag tag-name)
+                              (setf close-code %yaclml-code%))
+                            (emit-code `(unwind-protect
+                                         (progn ,@(mapcar #'writer (fold-strings (nreverse body-code))))
+                                         ,@(mapcar #'writer (fold-strings (nreverse close-code))))))
+                          (progn
+                            (emit-body body)
+                            (emit-close-tag tag-name))))
+                    (emit-empty-tag tag-name emittable-attributes))))
+            `(progn
+              ,@(mapcar #'writer (fold-strings (nreverse %yaclml-code%)))
+              nil))))))
 
 (defun with-xml-syntax ()
   (lambda (handler)
