@@ -214,8 +214,6 @@ http://www.w3.org/TR/xhtml1/#guidelines"
   (emit-body body)
   (emit-close-tag "html"))
 
-(def-html-tag <:html :i18n)
-
 (def-html-tag <:i :core :event :i18n)
 
 (def-html-tag <:iframe :core
