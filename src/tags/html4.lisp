@@ -52,9 +52,11 @@ http://www.w3.org/TR/xhtml1/#guidelines"
       (write-char #\? href)
       (loop
 	 for (key value . rest) on params by #'cddr
-	 do (arnesi:write-as-uri (princ-to-string key) href)
+	 do (etypecase key
+              (string (write-string key href))
+              (symbol (write-string (string-downcase key) href))) 
 	 do (write-char #\= href)
-	 do (arnesi:write-as-uri (princ-to-string value) href)
+	 do (princ value href)
 	 when rest
 	 do (write-char #\& href)))))
 
