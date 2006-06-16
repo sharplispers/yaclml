@@ -83,12 +83,14 @@
 ;; because of symbol names and xml format incompatibilities.
 
 (defpackage :xml
+  (:use)
   (:export
    #:base
    #:lang
    #:space))
 
 (defpackage :xlink
+  (:use)
   (:export
    #:type
    #:href
