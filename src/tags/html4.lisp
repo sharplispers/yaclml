@@ -220,7 +220,7 @@ http://www.w3.org/TR/xhtml1/#guidelines"
               frameborder
               longdesc
               marginheight
-              worginwidth
+              marginwidth
               name
               scrolling
               src)
