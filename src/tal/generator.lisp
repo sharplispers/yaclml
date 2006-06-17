@@ -61,8 +61,7 @@
   (preprocess-tal generator (pathname file-name)))
 
 (defmethod preprocess-tal ((generator file-system-generator) (name pathname))
-  (let ((*tal-truename* (truename name)))
-    (declare (special *tal-truename*))
+  (with-tal-compilation-unit name
     (compile-tal-string-to-lambda (read-string-from-file name))))
 
 ;; Copyright (c) 2002-2005, Edward Marco Baringer

@@ -256,9 +256,10 @@
     (compile nil (compile-tal-string-to-lambda string expression-package))))
 
 (defun compile-tal-file (pathname &optional (expression-package (find-package :common-lisp-user)))
-  (let ((*tal-truename* (truename pathname)))
-    (declare (special *tal-truename*))
-    (compile-tal-string (read-string-from-file pathname) expression-package)))
+  (with-tal-compilation-unit pathname
+    (compile-tal-string (read-string-from-file pathname
+                                               :external-format (arnesi::encoding-keyword-to-native :utf-8))
+                        expression-package)))
 
 ;; Copyright (c) 2002-2005, Edward Marco Baringer
 ;; All rights reserved. 

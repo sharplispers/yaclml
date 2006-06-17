@@ -4,6 +4,12 @@
 
 ;;;; * TAL Template Environments
 
+(defmacro with-tal-compilation-unit (pathname &body body)
+  (rebinding (pathname)
+    `(let ((*tal-truename* (truename ,pathname)))
+      (declare (special *tal-truename*))
+      ,@body)))
+
 ;;;; TAL environments are simply lists of binding-sets, a binding set
 ;;;; can be either a hash table, an object or an alist.
 
