@@ -10,6 +10,9 @@
       (declare (special *tal-truename*))
       ,@body)))
 
+(defun read-tal-file-into-string (pathname)
+  (read-string-from-file pathname :external-format :utf-8))
+
 ;;;; TAL environments are simply lists of binding-sets, a binding set
 ;;;; can be either a hash table, an object or an alist.
 

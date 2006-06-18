@@ -62,7 +62,7 @@
 
 (defmethod preprocess-tal ((generator file-system-generator) (name pathname))
   (with-tal-compilation-unit name
-    (compile-tal-string-to-lambda (read-string-from-file name))))
+    (compile-tal-string-to-lambda (read-tal-file-into-string name))))
 
 ;; Copyright (c) 2002-2005, Edward Marco Baringer
 ;; All rights reserved. 

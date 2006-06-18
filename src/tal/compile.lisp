@@ -257,9 +257,7 @@
 
 (defun compile-tal-file (pathname &optional (expression-package (find-package :common-lisp-user)))
   (with-tal-compilation-unit pathname
-    (compile-tal-string (read-string-from-file pathname
-                                               :external-format (arnesi::encoding-keyword-to-native :utf-8))
-                        expression-package)))
+    (compile-tal-string (read-tal-file-into-string pathname) expression-package)))
 
 ;; Copyright (c) 2002-2005, Edward Marco Baringer
 ;; All rights reserved. 
