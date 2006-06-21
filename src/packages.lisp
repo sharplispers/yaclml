@@ -7,43 +7,45 @@
   (:documentation "Yet Another Common Lisp Markup Language")
   (:use :common-lisp :it.bese.arnesi :iterate)
   (:shadowing-import-from :iterate #:while #:until)
-  (:export ;; code generation
-           #:emit-princ
-	   #:emit-html
-	   #:emit-code
-	   #:emit-princ-attributes
-	   #:emit-open-tag
-	   #:emit-close-tag
-	   #:emit-empty-tag
-	   #:emit-body
-	   #:emit-xml-tag
-           #:wrap-in-tag
-           ;; defining tags
-           #:deftag
-           #:deftag-macro
-           ;; using yaclml
-           #:with-yaclml-stream
-           #:enable-yaclml-syntax
-           #:disable-yaclml-syntx
-           #:enable-xml-syntax
-           #:disable-xml-syntax
-           #:with-xml-syntax
-	   #:*yaclml-stream*
-	   #:*yaclml-indent*
-           ;; tal
-           #:compile-tal-string
-           #:compile-tal-file
-           #:def-attribute-handler
-           #:def-tag-handler
-           #:read-tal-expression-from-string
-	   #:tal-generator
-	   #:file-system-generator
-	   #:load-tal
-	   #:template-truename
-           #:root-directories
-           #:*uri-to-package*
-           #:transform-lxml-form
-           #:transform-lxml-tree
+  (:export
+   ;; code generation
+   #:emit-princ
+   #:emit-html
+   #:emit-code
+   #:emit-princ-attributes
+   #:emit-open-tag
+   #:emit-close-tag
+   #:emit-empty-tag
+   #:emit-body
+   #:emit-xml-tag
+   #:wrap-in-tag
+   ;; defining tags
+   #:deftag
+   #:deftag-macro
+   ;; using yaclml
+   #:with-yaclml-stream
+   #:with-yaclml-output-to-string
+   #:enable-yaclml-syntax
+   #:disable-yaclml-syntx
+   #:enable-xml-syntax
+   #:disable-xml-syntax
+   #:with-xml-syntax
+   #:*yaclml-stream*
+   #:*yaclml-indent*
+   ;; tal
+   #:compile-tal-string
+   #:compile-tal-file
+   #:def-attribute-handler
+   #:def-tag-handler
+   #:read-tal-expression-from-string
+   #:tal-generator
+   #:file-system-generator
+   #:load-tal
+   #:template-truename
+   #:root-directories
+   #:*uri-to-package*
+   #:transform-lxml-form
+   #:transform-lxml-tree
 
    #:push-binding
    #:make-standard-environment
