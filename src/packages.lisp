@@ -6,6 +6,7 @@
   (:nicknames :yaclml)
   (:documentation "Yet Another Common Lisp Markup Language")
   (:use :common-lisp :it.bese.arnesi :iterate)
+  (:shadowing-import-from :iterate #:while #:until)
   (:export ;; code generation
            #:emit-princ
 	   #:emit-html
