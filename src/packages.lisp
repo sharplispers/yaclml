@@ -1,4 +1,4 @@
-;; -*- lisp -*-
+;; -*- Mode: Lisp; indent-tabs-mode:nil -*-
 
 (in-package :common-lisp-user)
 
@@ -23,7 +23,6 @@
            #:deftag-macro
            ;; using yaclml
            #:with-yaclml-stream
-           #:with-yaclml-output-to-string
            #:enable-yaclml-syntax
            #:disable-yaclml-syntx
            #:enable-xml-syntax
@@ -46,42 +45,43 @@
            #:transform-lxml-form
            #:transform-lxml-tree
 
-           #:push-binding
-           #:make-standard-environment
-           #:extend-environment
-           #:add-binding
-           #:lookup-tal-variable
-           #:tal-env
+   #:push-binding
+   #:make-standard-environment
+   #:extend-environment
+   #:add-binding
+   #:lookup-tal-variable
+   #:tal-env
 
-	   #:href
-	   
-	   ))
+   #:href
+   ))
 
 (defpackage :it.bese.yaclml.tags
   (:nicknames :<)
   (:documentation "YACLML programmatic HTML generation.")
   (:use)
-  (:export ;; HTML4
-           #:a #:abbr #:acronym #:address #:area #:b #:base #:bdo #:big
-           #:blockquote #:body #:br #:button #:caption #:cite #:code #:col
-           #:colgroup #:dd #:del #:dfn #:div #:dl #:dt #:em #:fieldset #:form
-           #:frame #:frameset #:h1 #:h2 #:h3 #:h4 #:h5 #:h6 #:head #:hr #:html
-           #:i #:iframe #:img #:input #:ins #:kbd #:label #:legend #:li #:link
-           #:map #:meta #:noframes #:noscript #:object #:ol #:optgroup #:option
-           #:p #:param #:pre #:q #:samp #:script #:select #:small #:span
-           #:strong #:style #:sub #:sup #:table #:tbody #:td #:textarea #:tfoot
-           #:th #:thead #:title #:tr #:tt #:ul #:var
-           ;; Not really HTML4, but close enough
-           #:applet #:param #:marquee #:embed
-           ;; YACLML extended HTML
-           #:href #:stylesheet #:text #:submit #:image #:checkbox #:file
-           #:as-is #:as-html #:call-with-yaclml-stream #:comment #:progn
-	   #:&nbsp
-	   ;; yaclml+ (shortcuts)
-	   #:ah #:ai))
+  (:export
+   ;; HTML4
+   #:a #:abbr #:acronym #:address #:area #:b #:base #:bdo #:big
+   #:blockquote #:body #:br #:button #:caption #:cite #:code #:col
+   #:colgroup #:dd #:del #:dfn #:div #:dl #:dt #:em #:fieldset #:form
+   #:frame #:frameset #:h1 #:h2 #:h3 #:h4 #:h5 #:h6 #:head #:hr #:html
+   #:i #:iframe #:img #:input #:ins #:kbd #:label #:legend #:li #:link
+   #:map #:meta #:noframes #:noscript #:object #:ol #:optgroup #:option
+   #:p #:param #:pre #:q #:samp #:script #:select #:small #:span
+   #:strong #:style #:sub #:sup #:table #:tbody #:td #:textarea #:tfoot
+   #:th #:thead #:title #:tr #:tt #:ul #:var
+   ;; Not really HTML4, but close enough
+   #:applet #:param #:marquee #:embed
+   ;; YACLML extended HTML
+   #:href #:stylesheet #:text #:submit #:image #:checkbox #:file
+   #:as-is #:as-html #:call-with-yaclml-stream #:comment #:progn
+   #:&nbsp
+   ;; yaclml+ (shortcuts)
+   #:ah #:ai))
 
-;; these two are temporary dummy packages that take care the svg tags below don't signal an error.
-;; because of symbol names and xml format incompatibilities.
+;; these two are temporary dummy packages that take care the svg tags
+;; below don't signal an error.  because of symbol names and xml
+;; format incompatibilities.
 
 (defpackage :xml
   (:use)
@@ -105,19 +105,23 @@
   (:use :cl :it.bese.yaclml)
   (:documentation "SVG library.")
   (:nicknames :svg :<svg)
-  (:export #:altGlyph #:altGlyphDef #:altGlyphItem #:a #:animate #:animateMotion
-           #:animateColor #:animateTransform #:circle #:color-profile #:clipPath
-           #:cursor #:defs #:desc #:definition-src #:ellipse #:filter #:feBlend
-           #:feColorMatrix #:feComponentTransfer #:feComposite #:feConvolveMatrix
-           #:feDiffuseLighting #:feDisplacementMap #:feFlood #:feGaussianBlur #:feImage
-           #:feMerge #:feMergeNode #:feMorphology #:feOffset #:feSpecularLighting
-           #:feTile #:feTurbulence #:feDistantLight #:fePointLight #:feSpotLight
-           #:feFuncR #:feFuncG #:feFuncB #:feFuncA #:font #:font-face #:font-face-src
-           #:font-face-uri #:font-face-format #:font-face-name #:foreignObject #:g
-           #:glyphRef #:glyph #:hkern #:image #:line #:linearGradient #:metadata #:marker
-           #:mask #:mpath #:missing-glyph #:path #:polyline #:polygon #:pattern #:rect
-           #:radialGradient #:svg #:svg-symbol #:switch #:style #:stop #:script #:svg-set #:title
-           #:text #:tspan #:tref #:textPath #:use #:view #:vkern))
+  (:export #:altGlyph #:altGlyphDef #:altGlyphItem #:a #:animate
+           #:animateMotion #:animateColor #:animateTransform #:circle
+           #:color-profile #:clipPath #:cursor #:defs #:desc
+           #:definition-src #:ellipse #:filter #:feBlend #:feColorMatrix
+           #:feComponentTransfer #:feComposite #:feConvolveMatrix
+           #:feDiffuseLighting #:feDisplacementMap #:feFlood
+           #:feGaussianBlur #:feImage #:feMerge #:feMergeNode
+           #:feMorphology #:feOffset #:feSpecularLighting #:feTile
+           #:feTurbulence #:feDistantLight #:fePointLight #:feSpotLight
+           #:feFuncR #:feFuncG #:feFuncB #:feFuncA #:font #:font-face
+           #:font-face-src #:font-face-uri #:font-face-format
+           #:font-face-name #:foreignObject #:g #:glyphRef #:glyph #:hkern
+           #:image #:line #:linearGradient #:metadata #:marker #:mask
+           #:mpath #:missing-glyph #:path #:polyline #:polygon #:pattern
+           #:rect #:radialGradient #:svg #:svg-symbol #:switch #:style
+           #:stop #:script #:svg-set #:title #:text #:tspan #:tref
+           #:textPath #:use #:view #:vkern))
 
 (defpackage :it.bese.yaclml.tal
   (:use)
