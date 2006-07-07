@@ -11,7 +11,7 @@ PUBLIC \"-//W3C//DTD XHTML 1.0 Transitional//EN\"
 (deftag <:comment (&body body)
   (emit-princ "<!--")
   (emit-body body)
-  (emit-princ "--!>"))
+  (emit-princ "-->"))
 
 (deftag-macro <:href (url &allow-other-attributes others &body body)
   (if body
