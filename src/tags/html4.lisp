@@ -348,10 +348,11 @@ http://www.w3.org/TR/xhtml1/#guidelines"
               title
               language)
 
-(def-html-tag <:select  :core :event :i18n
+(def-html-tag <:select :core :event :i18n
               disabled
               multiple
               name
+              accesskey
               onblur
               onfocus
               onchange
