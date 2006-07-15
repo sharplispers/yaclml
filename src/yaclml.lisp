@@ -97,6 +97,10 @@
   "The list of currently collected code this yaclml macro should
    expand into.")
 
+(defvar %yaclml-custom-attributes% nil
+  "The list of collected custom attributes in the most recent attribute-bind.
+   Custom attributes are defined with (@ name value ...) or (@ list-of-name-value-pairs).")
+
 (defvar *expanders* (make-hash-table :test 'eql)
   "Hash table mapping expanders to the expander function.")
 
@@ -120,6 +124,8 @@
             ((and (yaclml-constant-p item)
                   (stringp item))
              item)
+            ((keywordp item)
+             (string-downcase (princ-to-string item)))
             ((yaclml-constant-p item)
              (princ-to-string item))
             (t `(princ ,item *yaclml-stream*)))
@@ -130,7 +136,7 @@
   (dolist (item items %yaclml-code%)
     (if (yaclml-constant-p item)
         (push (escape-as-html (princ-to-string item)) %yaclml-code%)
-        (push `(write-as-html (princ-to-string ,item) :stream *yaclml-stream*) %yaclml-code%))))
+        (push `(emit-attribute-value ,item) %yaclml-code%))))
   
 (defun emit-code (&rest forms)
   "Emit to the current yaclml-code CODE. This means that whatever
@@ -138,61 +144,93 @@
    runtime."
   (setf %yaclml-code% (nconc forms %yaclml-code%)))
 
+(defmacro emit-attribute (name value)
+  (rebinding (value)
+    `(case ,value
+      ((t)
+       (princ #\Space *yaclml-stream*)
+       (princ ,name *yaclml-stream*)
+       (princ "=\"" *yaclml-stream*)
+       (princ ,name *yaclml-stream*)
+       (princ #\" *yaclml-stream*))
+      ((nil) nil)
+      (t
+       (princ #\Space *yaclml-stream*)
+       (princ ,name *yaclml-stream*)
+       (princ "=\"" *yaclml-stream*)
+       (emit-attribute-value ,value)
+       (princ #\" *yaclml-stream*)))))
+
+(defun emit-princ-attribute (name value)
+  (unless (stringp name)
+    (setf name (string-downcase (princ-to-string name))))
+  (emit-code
+   (rebinding (value)
+     `(case ,value
+       ((t)
+        (princ ,(concatenate 'string " " name "=\"" name "\"")
+         *yaclml-stream*))
+       ((nil) nil)
+       (t
+        (princ ,(concatenate 'string " " name "=\"") *yaclml-stream*)
+        (emit-attribute-value ,value)
+        (princ "\"" *yaclml-stream*))))))
+
 (defun emit-attribute-value (value)
   (if (listp value)
       (iter (for el in value)
-            (when el
-              (unless (first-time-p)
-                (princ " " *yaclml-stream*))
-              (princ el *yaclml-stream*)))
-      (princ (if (stringp value)
-                 (escape-as-html value)
-                 value) *yaclml-stream*)))
+            (unless (first-time-p)
+              (princ #\Space *yaclml-stream*))
+            (write-as-html (princ-to-string el) :stream *yaclml-stream*))
+      (write-as-html (princ-to-string value) :stream *yaclml-stream*)))
 
 (defun emit-princ-attributes (attributes)
-  "Assuming attributes is an alist of (name . value) pairs emit
-   the code nesseccary to print them at runtime. If VALUE is a
-   list every element will be concatenated to form the final string
-   value of the attribute.
+  ;; convert the list of attributes to the format we expect when attributes are provided at runtime
+  (%emit-princ-attributes (iter (for (name . value) in attributes)
+                                (nconcing (list name value))))
+  (dolist (custom-attributes %yaclml-custom-attributes%)
+    (if (rest custom-attributes)
+        (%emit-princ-attributes custom-attributes)
+        (emit-code `(iter (for (name value) on ,(first custom-attributes) :by #'cddr)
+                          (emit-attribute name value))))))
+
+(defun %emit-princ-attributes (attributes)
+  "Assuming attributes is a list of (name1 value1 name2 value2 ...), emit
+   the code necessary to print them at runtime. If VALUE is a
+   list every element will be concatenated separated by a space to
+   form the final string value of the attribute.
 
 If the value of any of the attributes is NIL it will be ignored.
 
 If a value is the symbol T the name of the attribute will be used
 as the value."
-  (dolist* ((key . value) attributes %yaclml-code%)
-    (cond
-      ((eql t value)
-       ;; according to xhtml thoses attributes which in html are
-       ;; specified without a value should just use the attribute
-       ;; name as the xhtml value
-       (emit-princ " " key "=\"" key "\""))
-      ((eql nil value) nil)
-      ((yaclml-constant-p value)
-       (progn
-         (emit-princ " " key "=\"")
-         (emit-html value)
-         (emit-princ "\"")))
-      (t
-       (if (and (consp value)
-                (eql 'cl:concatenate (first value))
-                (consp (cdr value))
-                (eql 'cl:string (second value)))
-           ;; a call to concatenate can be dealt with specially
+  (unless (evenp (length attributes))
+    (error "The number of elements in the attribute list is not even"))
+  (iter (for (key value) on attributes :by #'cddr)
+        (cond
+          ((eql t value)
+           ;; according to xhtml thoses attributes which in html are
+           ;; specified without a value should just use the attribute
+           ;; name as the xhtml value
+           (emit-princ " " key "=\"" key "\""))
+          ((eql nil value) nil)
+          ((yaclml-constant-p value)
            (progn
              (emit-princ " " key "=\"")
-             (dolist (val (cddr value))
-               (emit-princ val)))
-           (emit-code (let ((v (gensym)))
-                        `(let ((,v ,value))
-                           (case ,v
-                             ((t)
-                              (princ ,(concatenate 'string " " (princ-to-string key) "=\"" (princ-to-string key) "\"")
-                                     *yaclml-stream*))
-                             ((nil) nil)
-                             (t
-                              (princ ,(concatenate 'string " " (princ-to-string key) "=\"") *yaclml-stream*)
-                              (emit-attribute-value ,v)
-                              (princ "\"" *yaclml-stream*)))))))))))
+             (emit-html value)
+             (emit-princ "\"")))
+          (t
+           (if (and (consp value)
+                    (eql 'cl:concatenate (first value))
+                    (consp (cdr value))
+                    (eql 'cl:string (second value)))
+               ;; a call to concatenate can be dealt with specially
+               (progn
+                 (emit-princ " " key "=\"")
+                 (dolist (val (cddr value))
+                   (emit-princ val)))
+               (emit-princ-attribute key value)))))
+  %yaclml-code%)
 
 (defun emit-indentation ()
   (when *yaclml-indent*
@@ -274,7 +312,7 @@ BODY is simply the body of the expander lambda.
 Within the BODY the functions EMIT-CODE, EMIT-PRINC and EMIT-HTML can
 be used to generate code. EMIT-CODE should be passed lisp code which
 will be executed at runtime."
-  (let ((contents (gensym)))
+  (with-unique-names (contents)
     `(progn
        (setf (gethash ',name *expanders*)
              (lambda (,contents)
@@ -285,8 +323,7 @@ will be executed at runtime."
        (defmacro ,name (&rest contents)
          (let ((%yaclml-code% nil)
 	       (%yaclml-indentation-depth% 0))
-           (declare (special %yaclml-code%))
-            ;; build tag's body
+           ;; build tag's body
 	   (funcall (gethash ',name *expanders*) contents)
            (setf %yaclml-code% (nreverse %yaclml-code%))
 	   ;; now that we've generated the code we can fold the
@@ -296,7 +333,8 @@ will be executed at runtime."
                                (if (stringp form)
                                    `(write-string ,form *yaclml-stream*)
 				   form))
-                             (fold-strings %yaclml-code%))))))))
+                             (fold-strings %yaclml-code%))
+             (values)))))))
 
 (defmacro deftag-macro (name attributes &body body)
   "Define a new YACLML tag macro.

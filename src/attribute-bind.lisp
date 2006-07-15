@@ -7,7 +7,7 @@
 ;;;; This macro serves the same purpose as destructuring-bind but
 ;;;; allows for a different syntax.
 
-(defmacro attribute-bind (attribute-spec list &body body)
+(defmacro attribute-bind (attribute-spec attribute-values &body body)
   "Evaluate BODY with the values in LIST bound according to ATTRIBUTE-SPEC.
 
 ATTRIBUTE-SPEC has the following form:
@@ -30,52 +30,59 @@ if &body is present then BODY will be bound to anything remaining
 in LIST after attribute parsing is complete."
   (destructuring-bind (locals attrs flags allow-other-attributes body-var)
       (parse-attribute-spec attribute-spec)
-    (let ((list-sym (gensym))
-          (element-sym (gensym)))
-      `(let ,(remove-if #'null (append locals
-                                       attrs
-                                       flags
-                                       (list allow-other-attributes)
-                                       (list body-var)
-                                       (list (list list-sym list))))
-	 ,(when body-var
-	    `(declare (ignorable ,body-var)))
-         ,@(loop
-              for local in locals
-              collect `(setf ,local (pop ,list-sym)))
-         (iterate
-          (while (and (consp ,list-sym)
-                      (keywordp (car ,list-sym))))
-          (let ((,element-sym (pop ,list-sym)))
-            (case ,element-sym
-              ,@(loop
-                   for attr in attrs
-                   ;; NB: ATTR is (symbol-to-bind-to default-value),
-                   ;; we want to match against the keyword whose
-                   ;; string name is (symbol-name symbol-to-bind-to),
-                   ;; hence the intern.
-                   collect `(,(intern (string (car attr)) :keyword) (setf ,(car attr) (pop ,list-sym))))
-              ,@(loop
-                   for flag in flags
-                   collect `(,(intern (string flag) :keyword) (setf ,flag t)))
-              (t
-               ,(if allow-other-attributes
-                    `(progn
-                       (push ,element-sym ,allow-other-attributes)
-                       (push (pop ,list-sym) ,allow-other-attributes))
-                    `(error 'unrecognized-attribute :attribute ,element-sym))))))
-         ,(when (null body-var)
-            `(when ,list-sym
-               (warn "Ignoring extra elements in body: ~S" ,list-sym)))
-         ,(when body-var
-	    `(setf ,body-var ,list-sym))
-         ,(when allow-other-attributes
-	    `(setf ,allow-other-attributes (nreverse ,allow-other-attributes)))
-         ,@(if (and (consp body)
-                    (consp (car body))
-                    (eql 'declare (car (car body))))
-               `((locally ,@body))
-               body)))))
+    (with-unique-names (element)
+      (rebinding (attribute-values)
+        `(let ,(append (remove-if #'null (append locals
+                                                 attrs
+                                                 flags
+                                                 (list allow-other-attributes)
+                                                 (list body-var)))
+                       (list '%yaclml-custom-attributes%))
+           (declare (ignorable %yaclml-custom-attributes%))
+           ,(when body-var
+              `(declare (ignorable ,body-var)))
+           ,@(loop
+                for local in locals
+                collect `(setf ,local (pop ,attribute-values)))
+           (setf ,attribute-values (iter (for el in ,attribute-values)
+                                         (if (and (listp el)
+                                                  (symbolp (first el))
+                                                  (string= "@" (symbol-name (first el))))
+                                             (push (rest el) %yaclml-custom-attributes%)
+                                             (collect el))))           
+           (iterate
+            (while (and (consp ,attribute-values)
+                        (keywordp (car ,attribute-values))))
+            (let ((,element (pop ,attribute-values)))
+              (case ,element
+                ,@(loop
+                     for attr in attrs
+                     ;; NB: ATTR is (symbol-to-bind-to default-value),
+                     ;; we want to match against the keyword whose
+                     ;; string name is (symbol-name symbol-to-bind-to),
+                     ;; hence the intern.
+                     collect `(,(intern (string (car attr)) :keyword) (setf ,(car attr) (pop ,attribute-values))))
+                ,@(loop
+                     for flag in flags
+                     collect `(,(intern (string flag) :keyword) (setf ,flag t)))
+                (t
+                 ,(if allow-other-attributes
+                      `(progn
+                         (push ,element ,allow-other-attributes)
+                         (push (pop ,attribute-values) ,allow-other-attributes))
+                      `(error 'unrecognized-attribute :attribute ,element))))))
+           ,(when (null body-var)
+              `(when ,attribute-values
+                (warn "Ignoring extra elements in body: ~S" ,attribute-values)))
+           ,(when body-var
+              `(setf ,body-var ,attribute-values))
+           ,(when allow-other-attributes
+              `(setf ,allow-other-attributes (nreverse ,allow-other-attributes)))
+           ,@(if (and (consp body)
+                      (consp (car body))
+                      (eql 'declare (car (car body))))
+                 `((locally ,@body))
+                 body))))))
 
 (define-condition unrecognized-attribute (error)
   ((attribute :accessor attribute :initarg :attribute)
