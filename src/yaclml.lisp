@@ -407,10 +407,12 @@ normal lisp code."
                      `(write-string ,form *yaclml-stream*)
                      form)))
           (let* ((list (read-delimited-list #\> s t))
-                 (head (car list))
-                 (tag-name (string-downcase (string (if (consp head)
-                                                        (eval head)
-                                                        head))))
+                 (head (if (consp (car list))
+                           (eval (car list))
+                           (car list)))
+                 (tag-name (if (stringp head)
+                               head
+                               (string-downcase (string head))))
                  (%yaclml-code% nil)
                  (%yaclml-indentation-depth% 0))
             (attribute-bind
