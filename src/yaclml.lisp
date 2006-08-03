@@ -185,13 +185,16 @@
       (write-as-html (princ-to-string value) :stream *yaclml-stream*)))
 
 (defun emit-princ-attributes (attributes)
-  ;; convert the list of attributes to the format we expect when attributes are provided at runtime
+  ;; convert the list of attributes at compile time to the format we expect when attributes are provided at runtime.
+  ;; this way this conversion only happens at compile time, not the other way around.
   (%emit-princ-attributes (iter (for (name . value) in attributes)
                                 (nconcing (list name value))))
   (dolist (custom-attributes %yaclml-custom-attributes%)
     (if (rest custom-attributes)
         (%emit-princ-attributes custom-attributes)
         (emit-code `(iter (for (name value) on ,(first custom-attributes) :by #'cddr)
+                          (unless (stringp name)
+                            (setf name (string-downcase (string name))))
                           (emit-attribute name value))))))
 
 (defun %emit-princ-attributes (attributes)
