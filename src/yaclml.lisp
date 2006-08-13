@@ -400,8 +400,12 @@ normal lisp code."
   (declare (ignore c))
   (let ((ch (read-char s)))
     (unread-char ch s)
-    (if (eql ch #\Space)
-        '<
+    (if (find ch " :(" :test #'eql)
+        (progn
+          ;; then read the next form with standard io syntax
+          (unread-char #\< s)
+          (with-standard-io-syntax
+              (read s t nil t)))
         (flet ((writer (form)
                  (if (stringp form)
                      `(write-string ,form *yaclml-stream*)
