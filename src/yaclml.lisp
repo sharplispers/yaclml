@@ -398,59 +398,57 @@ You may want to use (enable-bracket-reader) and {with-xml-syntax
 for attributes and rest parameters for nested XML elements or
 normal lisp code."
   (declare (ignore c))
-  (let ((ch (read-char s)))
-    (unread-char ch s)
-    (if (find ch " :(" :test #'eql)
-        (progn
-          ;; then read the next form with standard io syntax
-          (unread-char #\< s)
-          (with-standard-io-syntax
-              (read s t nil t)))
-        (flet ((writer (form)
-                 (if (stringp form)
-                     `(write-string ,form *yaclml-stream*)
-                     form)))
-          (let* ((list (read-delimited-list #\> s t))
-                 (head (if (consp (car list))
-                           (eval (car list))
-                           (car list)))
-                 (tag-name (if (stringp head)
-                               head
-                               (string-downcase (string head))))
-                 (%yaclml-code% nil)
-                 (%yaclml-indentation-depth% 0))
-            (attribute-bind
-                (&allow-other-attributes other-attributes &body body)
-                (cdr list)
-              (let* ((protect nil)
-                     (emittable-attributes
-                      (iter (for attribute on other-attributes by 'cddr)
-                            (if (eq (first attribute) :with-unwind-protect)
-                                (setf protect (second attribute))
-                                (collect (cons (string-downcase (string (first attribute)))
-                                               (second attribute)))))))
-                (if body
-                    (progn
-                      (emit-open-tag tag-name emittable-attributes)
-                      (if protect
-                          (let ((body-code)
-                                (close-code))
-                            (let ((%yaclml-code% '()))
-                              (emit-body body)
-                              (setf body-code %yaclml-code%))
-                            (let ((%yaclml-code% '()))
-                              (emit-close-tag tag-name)
-                              (setf close-code %yaclml-code%))
-                            (emit-code `(unwind-protect
-                                         (progn ,@(mapcar #'writer (fold-strings (nreverse body-code))))
-                                         ,@(mapcar #'writer (fold-strings (nreverse close-code))))))
-                          (progn
+  (if (find (peek-char nil s nil nil) " :(" :test #'eql)
+      (progn
+        ;; then read the next form with standard io syntax
+        (unread-char #\< s)
+        (with-standard-io-syntax
+          (read s t nil t)))
+      (flet ((writer (form)
+               (if (stringp form)
+                   `(write-string ,form *yaclml-stream*)
+                   form)))
+        (let* ((list (read-delimited-list #\> s t))
+               (head (if (consp (car list))
+                         (eval (car list))
+                         (car list)))
+               (tag-name (if (stringp head)
+                             head
+                             (string-downcase (string head))))
+               (%yaclml-code% nil)
+               (%yaclml-indentation-depth% 0))
+          (attribute-bind
+              (&allow-other-attributes other-attributes &body body)
+              (cdr list)
+            (let* ((protect nil)
+                   (emittable-attributes
+                    (iter (for attribute on other-attributes by 'cddr)
+                          (if (eq (first attribute) :with-unwind-protect)
+                              (setf protect (second attribute))
+                              (collect (cons (string-downcase (string (first attribute)))
+                                             (second attribute)))))))
+              (if body
+                  (progn
+                    (emit-open-tag tag-name emittable-attributes)
+                    (if protect
+                        (let ((body-code)
+                              (close-code))
+                          (let ((%yaclml-code% '()))
                             (emit-body body)
-                            (emit-close-tag tag-name))))
-                    (emit-empty-tag tag-name emittable-attributes))))
-            `(progn
-              ,@(mapcar #'writer (fold-strings (nreverse %yaclml-code%)))
-              nil))))))
+                            (setf body-code %yaclml-code%))
+                          (let ((%yaclml-code% '()))
+                            (emit-close-tag tag-name)
+                            (setf close-code %yaclml-code%))
+                          (emit-code `(unwind-protect
+                                       (progn ,@(mapcar #'writer (fold-strings (nreverse body-code))))
+                                       ,@(mapcar #'writer (fold-strings (nreverse close-code))))))
+                        (progn
+                          (emit-body body)
+                          (emit-close-tag tag-name))))
+                  (emit-empty-tag tag-name emittable-attributes))))
+          `(progn
+            ,@(mapcar #'writer (fold-strings (nreverse %yaclml-code%)))
+            nil)))))
 
 (defun with-xml-syntax ()
   (lambda (handler)
