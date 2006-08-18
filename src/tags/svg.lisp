@@ -4,6 +4,8 @@
 
 ;;;; * YACLML tags mapping to SVG tags.
 
+;; TODO this file badly needs factoring, see def-html-tag for examples
+
 ;; ** Helper macros and function for defining the tag macros. The def-annoying-svg-tag macro circumvents problems with the
 ;; `symbol' and `use' tag. They're reserved for the cl core. Invoke them by putting svg- in front. 
 
@@ -1342,6 +1344,14 @@
              filter
              color-interpolation-filters
              cursor
+             stroke
+             stroke-dasharray
+             stroke-dashoffset
+             stroke-linecap
+             stroke-linejoin
+             stroke-miterlimit
+             stroke-width
+             fill
              flood-color
              flood-opacity
              lighting-color
