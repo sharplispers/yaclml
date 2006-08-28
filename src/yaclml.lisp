@@ -404,8 +404,10 @@ Syntax examples:
   <foo bar=\"42\"/>"
   '(eval-when (:compile-toplevel :execute)
     (setf *readtable* (copy-readtable *readtable*))
-    (set-macro-character *xml-reader-open-char* #'xml-reader-open nil *readtable*)
-    (set-syntax-from-char *xml-reader-close-char* #\) *readtable*)))
+    (%enable-xml-syntax)))
+
+(defun %enable-xml-syntax ()
+  (set-macro-character *xml-reader-open-char* #'xml-reader-open nil *readtable*))
 
 (defun xml-reader-open (s char)
   "Emit XML elements into *yaclml-stream*, use keyword parameters
@@ -446,58 +448,59 @@ normal lisp code. See enable-xml-syntax for more details."
              (if (stringp form)
                  `(write-string ,form *yaclml-stream*)
                  form)))
-      (let* ((list (let ((result (read-delimited-list #\> s t)))
-                     ;;(format t "The delimited list is ~S~%" result) ; TODO debug code
-                     result))
-             (head (if simple-version
-                       (subseq symbol-name 1)
-                       (if (consp (car list))
-                           (eval (car list))
-                           (car list))))
-             (tag-name (if (stringp head)
-                           head
-                           (string-downcase (princ-to-string head))))
-             (%yaclml-code% nil)
-             (%yaclml-indentation-depth% 0))
-        (attribute-bind
-            (&allow-other-attributes other-attributes &body body)
-            (if simple-version
-                list
-                (cdr list))
-          (let* ((protect nil)
-                 (emittable-attributes
-                  (iter (for attribute on other-attributes by 'cddr)
-                        (if (eq (first attribute) :with-unwind-protect)
-                            (setf protect (second attribute))
-                            (collect (cons (string-downcase (string (first attribute)))
-                                           (second attribute)))))))
-            (if body
-                (progn
-                  (emit-open-tag tag-name emittable-attributes)
-                  (if protect
-                      (let ((body-code)
-                            (close-code))
-                        (let ((%yaclml-code% '()))
+      (let ((*readtable* (copy-readtable)))
+        (set-syntax-from-char *xml-reader-close-char* #\) *readtable*)
+        (let* ((list (let ((result (read-delimited-list #\> s t)))
+                       ;;(format t "The delimited list is ~S~%" result) ; TODO debug code
+                       result))
+               (head (if simple-version
+                         (subseq symbol-name 1)
+                         (if (consp (car list))
+                             (eval (car list))
+                             (car list))))
+               (tag-name (if (stringp head)
+                             head
+                             (string-downcase (princ-to-string head))))
+               (%yaclml-code% nil)
+               (%yaclml-indentation-depth% 0))
+          (attribute-bind
+              (&allow-other-attributes other-attributes &body body)
+              (if simple-version
+                  list
+                  (cdr list))
+            (let* ((protect nil)
+                   (emittable-attributes
+                    (iter (for attribute on other-attributes by 'cddr)
+                          (if (eq (first attribute) :with-unwind-protect)
+                              (setf protect (second attribute))
+                              (collect (cons (string-downcase (string (first attribute)))
+                                             (second attribute)))))))
+              (if body
+                  (progn
+                    (emit-open-tag tag-name emittable-attributes)
+                    (if protect
+                        (let ((body-code)
+                              (close-code))
+                          (let ((%yaclml-code% '()))
+                            (emit-body body)
+                            (setf body-code %yaclml-code%))
+                          (let ((%yaclml-code% '()))
+                            (emit-close-tag tag-name)
+                            (setf close-code %yaclml-code%))
+                          (emit-code `(unwind-protect
+                                       (progn ,@(mapcar #'writer (fold-strings (nreverse body-code))))
+                                       ,@(mapcar #'writer (fold-strings (nreverse close-code))))))
+                        (progn
                           (emit-body body)
-                          (setf body-code %yaclml-code%))
-                        (let ((%yaclml-code% '()))
-                          (emit-close-tag tag-name)
-                          (setf close-code %yaclml-code%))
-                        (emit-code `(unwind-protect
-                                     (progn ,@(mapcar #'writer (fold-strings (nreverse body-code))))
-                                     ,@(mapcar #'writer (fold-strings (nreverse close-code))))))
-                      (progn
-                        (emit-body body)
-                        (emit-close-tag tag-name))))
-                (emit-empty-tag tag-name emittable-attributes))))
-        `(progn
-          ,@(mapcar #'writer (fold-strings (nreverse %yaclml-code%)))
-          nil)))))
+                          (emit-close-tag tag-name))))
+                  (emit-empty-tag tag-name emittable-attributes))))
+          `(progn
+            ,@(mapcar #'writer (fold-strings (nreverse %yaclml-code%)))
+            nil))))))
 
 (defun with-xml-syntax ()
   (lambda (handler)
-    (set-macro-character *xml-reader-open-char* #'xml-reader-open)
-    (set-macro-character *xml-reader-close-char* (get-macro-character #\)))
+    (%enable-xml-syntax)
     `(progn ,@(funcall handler))))
 
 ;; Copyright (c) 2002-2005, Edward Marco Baringer
