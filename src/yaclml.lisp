@@ -121,8 +121,7 @@
    be done at compile time."
   (dolist (item items %yaclml-code%)
     (push (cond
-            ((and (yaclml-constant-p item)
-                  (stringp item))
+            ((stringp item)
              item)
             ((keywordp item)
              (string-downcase (princ-to-string item)))
@@ -421,9 +420,9 @@ normal lisp code. See enable-xml-syntax for more details."
         (symbol nil)
         (symbol-name nil)
         (next-char nil)
-        ;; simple-version means that the symbol is the xml tag name, e.g. <foo
-        ;; otherwise it's a <"foo" or a <(foo), the latter is evaluated and
-        ;; the result is used as the tag name.
+        ;; simple-version means that the xml tag name is a symbol, e.g. <foo
+        ;; otherwise it's a <"foo" or a <(foo). unless it's a symbol it is
+        ;; evaluated and the result is used as the tag name.
         (simple-version t))
     (unwind-protect
          (unread-char char s)                    ; read the entire token
@@ -444,21 +443,21 @@ normal lisp code. See enable-xml-syntax for more details."
           ;;(format t "Bailing out with ~S~%" symbol) ; TODO debug code
           (return-from xml-reader-open symbol)))
     ;;(format t "We've got a hit, simple-version? ~S~%" simple-version) ; TODO debug code
-    (flet ((writer (form)
-             (if (stringp form)
-                 `(write-string ,form *yaclml-stream*)
-                 form)))
-      (let ((*readtable* (copy-readtable)))
-        (set-syntax-from-char *xml-reader-close-char* #\) *readtable*)
+    (let ((*readtable* (copy-readtable)))
+      (set-syntax-from-char *xml-reader-close-char* #\) *readtable*)
+      (labels ((writer (form)
+                 (if (stringp form)
+                     `(write-string ,form *yaclml-stream*)
+                     form))
+               (emitter (form)
+                 (mapcar #'writer (fold-strings (nreverse form)))))
         (let* ((list (let ((result (read-delimited-list #\> s t)))
                        ;;(format t "The delimited list is ~S~%" result) ; TODO debug code
                        result))
                (head (if simple-version
-                         (subseq symbol-name 1)
-                         (if (consp (car list))
-                             (eval (car list))
-                             (car list))))
-               (tag-name (if (stringp head)
+                         (subseq symbol-name 1) ; drop the "<" from the symbol-name
+                         (car list)))
+               (tag-name (if (or (stringp head) (consp head))
                              head
                              (string-downcase (princ-to-string head))))
                (%yaclml-code% nil)
@@ -476,26 +475,46 @@ normal lisp code. See enable-xml-syntax for more details."
                               (collect (cons (string-downcase (string (first attribute)))
                                              (second attribute)))))))
               (if body
-                  (progn
-                    (emit-open-tag tag-name emittable-attributes)
+                  (let* ((open-code)
+                         (body-code)
+                         (close-code)
+                         (rebind-tag-name-p (consp tag-name))
+                         (original-tag-name tag-name))
+                    (when rebind-tag-name-p
+                      (setf tag-name (gensym "TAG-NAME")))
+                    (let ((%yaclml-code% '()))
+                      (emit-open-tag tag-name emittable-attributes)
+                      (setf open-code %yaclml-code%))
+                    (let ((%yaclml-code% '()))
+                      (emit-body body)
+                      (setf body-code %yaclml-code%))
+                    (let ((%yaclml-code% '()))
+                      (emit-close-tag tag-name)
+                      (setf close-code %yaclml-code%))
                     (if protect
-                        (let ((body-code)
-                              (close-code))
-                          (let ((%yaclml-code% '()))
-                            (emit-body body)
-                            (setf body-code %yaclml-code%))
-                          (let ((%yaclml-code% '()))
-                            (emit-close-tag tag-name)
-                            (setf close-code %yaclml-code%))
-                          (emit-code `(unwind-protect
-                                       (progn ,@(mapcar #'writer (fold-strings (nreverse body-code))))
-                                       ,@(mapcar #'writer (fold-strings (nreverse close-code))))))
-                        (progn
-                          (emit-body body)
-                          (emit-close-tag tag-name))))
+                        (if rebind-tag-name-p
+                            (emit-code `(let ((,tag-name ,original-tag-name))
+                                         ,@(emitter open-code)
+                                         (unwind-protect
+                                              (progn ,@(emitter body-code))
+                                           ,@(emitter close-code))))
+                            (emit-code `(progn
+                                         ,@(emitter open-code)
+                                         (unwind-protect
+                                              (progn ,@(emitter body-code))
+                                           ,@(emitter close-code)))))
+                        (if rebind-tag-name-p
+                            (emit-code `(let ((,tag-name ,original-tag-name))
+                                         ,@(emitter open-code)
+                                         ,@(emitter body-code)
+                                         ,@(emitter close-code)))
+                            (emit-code `(progn
+                                         ,@(emitter open-code)
+                                         ,@(emitter body-code)
+                                         ,@(emitter close-code))))))
                   (emit-empty-tag tag-name emittable-attributes))))
           `(progn
-            ,@(mapcar #'writer (fold-strings (nreverse %yaclml-code%)))
+            ,@(emitter %yaclml-code%)
             nil))))))
 
 (defun with-xml-syntax ()
