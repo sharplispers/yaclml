@@ -2,6 +2,8 @@
 
 (defpackage :it.bese.yaclml.test
   (:use :common-lisp
+        :arnesi
+        :iterate
 	:it.bese.yaclml
 	:it.bese.FiveAM))
 

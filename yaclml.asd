@@ -31,9 +31,20 @@
 
 (defsystem :yaclml.test
   :components ((:module :t
-			:components ((:file "packages")
-				     (:file "tal" :depends-on ("packages")))))
+                        :components ((:file "packages")
+                                     (:file "tal" :depends-on ("packages"))
+                                     (:file "xml-syntax" :depends-on ("packages")))))
   :depends-on (:yaclml :FiveAM))
+
+(defmethod perform ((op asdf:load-op) (system (eql (find-system :yaclml.test))))
+  (asdf:oos 'asdf:load-op :yaclml.test)
+  (eval (read-from-string "(progn
+                             (arnesi:enable-bracket-reader)
+                             (in-package :it.bese.yaclml.test))")))
+
+(defmethod perform ((op asdf:test-op) (system (eql (find-system :yaclml))))
+  (asdf:oos 'asdf:load-op :yaclml.test)
+  (funcall (read-from-string "5am:run!") :it.bese.yaclml))
 
 (defun ensure-system-has-feature
     (system-name version-string &optional (hint ""))
