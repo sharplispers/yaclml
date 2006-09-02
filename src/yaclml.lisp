@@ -515,7 +515,7 @@ normal lisp code. See enable-xml-syntax for more details."
                   (emit-empty-tag tag-name emittable-attributes))))
           `(progn
             ,@(emitter %yaclml-code%)
-            nil))))))
+            (values)))))))
 
 (defun with-xml-syntax ()
   (lambda (handler)
