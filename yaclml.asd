@@ -9,21 +9,21 @@
     :components ((:static-file "yaclml.asd")
                  (:module :src
                   :components ((:file "packages")
-			       (:file "yaclml" :depends-on ("packages" "attribute-bind"))
-			       (:file "attribute-bind" :depends-on ("packages"))
-			       (:file "bracket-reader" :depends-on ("packages" :tags))
-			       (:module :tags
+                               (:file "yaclml" :depends-on ("packages" "attribute-bind"))
+                               (:file "attribute-bind" :depends-on ("packages"))
+                               (:file "bracket-reader" :depends-on ("packages" :tags))
+                               (:module :tags
                                 :serial t
-				:components ((:file "html4")
-					     (:file "standard-yaclml")
-					     (:file "svg")
-					     (:file "html+"))
-				:depends-on ("yaclml"))
+                                :components ((:file "html4")
+                                             (:file "standard-yaclml")
+                                             (:file "svg")
+                                             (:file "html+"))
+                                :depends-on ("yaclml"))
                                (:module :tal
-				:components ((:file "xmls")
+                                :components ((:file "xmls")
                                              (:file "compile" :depends-on ("xmls" "tal-environment"))
-					     (:file "generator" :depends-on ("compile"))
-					     (:file "handlers" :depends-on ("compile"))
+                                             (:file "generator" :depends-on ("compile"))
+                                             (:file "handlers" :depends-on ("compile"))
                                              (:file "tal-environment"))
                                 :depends-on ("yaclml" :tags)))))
     :properties ((:features "v0.5.2" "v0.5.1" "v0.5.0"))
