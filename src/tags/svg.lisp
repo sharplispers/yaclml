@@ -19,6 +19,23 @@
      (emit-body body)
      (emit-close-tag ,(string-downcase (symbol-name name))))))
 
+(defmacro def-svg-tag-humpback (name &rest attributes)
+  (let ((effective-attributes attributes))
+  `(deftag ,(intern (string-upcase name)) (&attribute ,@effective-attributes &body body)
+     (emit-open-tag ,name
+                    (list ,@(mapcar (lambda (attr)
+                                      `(cons 
+                                         ,(if (stringp attr)
+                                              attr
+                                              (string-downcase (symbol-name attr)))
+                                         ,(if (stringp attr)
+                                              (intern (string-upcase attr))
+                                              attr)))
+;                                         ,(string-downcase (symbol-name attr)) ,attr))
+                                    effective-attributes)))
+     (emit-body body)
+     (emit-close-tag ,name))))
+
 (eval-when (:compile-toplevel :load-toplevel :execute)
  (defun concat-symbol (&rest args)
    "Concatenate symbols or strings to form an interned symbol"
@@ -1249,7 +1266,7 @@
              y2
              transform)
 
-(def-svg-tag linearGradient
+(def-svg-tag-humpback "linearGradient"
              id
              xml:base
              xml:lang
@@ -1897,7 +1914,9 @@
              color
              color-interpolation
              color-rendering
-             offset)
+             offset
+             stop-color
+             stop-opacity)
 
 (def-svg-tag script
              id
