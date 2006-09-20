@@ -21,7 +21,13 @@
 
 (defmacro def-svg-tag-humpback (name &rest attributes)
   (let ((effective-attributes attributes))
-  `(deftag ,(intern (string-upcase name)) (&attribute ,@effective-attributes &body body)
+  `(deftag ,(intern (string-upcase name)) (&attribute ,@(mapcar 
+                                                          (lambda (attr)
+                                                            (if (stringp attr) 
+                                                                (intern (string-upcase attr))
+                                                                attr))
+                                                          effective-attributes)
+                                                       &body body)
      (emit-open-tag ,name
                     (list ,@(mapcar (lambda (attr)
                                       `(cons 
@@ -1274,14 +1280,14 @@
              color
              color-interpolation
              color-rendering
-             externalResourcesRequired
+             "externalResourcesRequired"
              x1
              y1
              x2
              y2
-             gradientUnits
-             gradientTransform
-             spreadMethod)
+             "gradientUnits"
+             "gradientTransform"
+             "spreadMethod")
 
 (def-svg-tag metadata
              svg
@@ -1970,6 +1976,7 @@
              stroke-linejoin
              stroke-miterlimit
              stroke-width
+  style
              color
              color-interpolation
              color-rendering
