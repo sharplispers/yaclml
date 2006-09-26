@@ -104,26 +104,9 @@
    #:actuate))
 
 (defpackage :it.bese.yaclml.svg
-  (:use :cl :it.bese.yaclml)
+  (:use :cl :it.bese.yaclml :iterate)
   (:documentation "SVG library.")
-  (:nicknames :svg :<svg)
-  (:export #:altGlyph #:altGlyphDef #:altGlyphItem #:a #:animate
-           #:animateMotion #:animateColor #:animateTransform #:circle
-           #:color-profile #:clipPath #:cursor #:defs #:desc
-           #:definition-src #:ellipse #:filter #:feBlend #:feColorMatrix
-           #:feComponentTransfer #:feComposite #:feConvolveMatrix
-           #:feDiffuseLighting #:feDisplacementMap #:feFlood
-           #:feGaussianBlur #:feImage #:feMerge #:feMergeNode
-           #:feMorphology #:feOffset #:feSpecularLighting #:feTile
-           #:feTurbulence #:feDistantLight #:fePointLight #:feSpotLight
-           #:feFuncR #:feFuncG #:feFuncB #:feFuncA #:font #:font-face
-           #:font-face-src #:font-face-uri #:font-face-format
-           #:font-face-name #:foreignObject #:g #:glyphRef #:glyph #:hkern
-           #:image #:line #:linearGradient #:metadata #:marker #:mask
-           #:mpath #:missing-glyph #:path #:polyline #:polygon #:pattern
-           #:rect #:radialGradient #:svg #:svg-symbol #:switch #:style
-           #:stop #:script #:svg-set #:title #:text #:tspan #:tref
-           #:textPath #:use #:view #:vkern))
+  (:nicknames :svg :<svg))
 
 (defpackage :it.bese.yaclml.tal
   (:use)

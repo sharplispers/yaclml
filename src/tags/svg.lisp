@@ -4,58 +4,52 @@
 
 ;;;; * YACLML tags mapping to SVG tags.
 
-;; TODO this file badly needs factoring, see def-html-tag for examples
+;; TODO this file badly needs factoring, see def-html-tag for examples to factor out attribute groups
 
-;; ** Helper macros and function for defining the tag macros. The def-annoying-svg-tag macro circumvents problems with the
-;; `symbol' and `use' tag. They're reserved for the cl core. Invoke them by putting svg- in front. 
+;; ** Helper macros and function for defining the tag macros.
 
 (defmacro def-svg-tag (name &rest attributes)
-  (let ((effective-attributes attributes))
-  `(deftag ,name (&attribute ,@effective-attributes &body body)
-     (emit-open-tag ,(string-downcase (symbol-name name))
-                    (list ,@(mapcar (lambda (attr)
-                                      `(cons ,(string-downcase (symbol-name attr)) ,attr))
-                                    effective-attributes)))
-     (emit-body body)
-     (emit-close-tag ,(string-downcase (symbol-name name))))))
-
-(defmacro def-svg-tag-humpback (name &rest attributes)
-  (let ((effective-attributes attributes))
-  `(deftag ,(intern (string-upcase name)) (&attribute ,@(mapcar 
-                                                          (lambda (attr)
-                                                            (if (stringp attr) 
-                                                                (intern (string-upcase attr))
-                                                                attr))
-                                                          effective-attributes)
-                                                       &body body)
-     (emit-open-tag ,name
-                    (list ,@(mapcar (lambda (attr)
-                                      `(cons 
-                                         ,(if (stringp attr)
-                                              attr
-                                              (string-downcase (symbol-name attr)))
-                                         ,(if (stringp attr)
-                                              (intern (string-upcase attr))
-                                              attr)))
-;                                         ,(string-downcase (symbol-name attr)) ,attr))
-                                    effective-attributes)))
-     (emit-body body)
-     (emit-close-tag ,name))))
+  ;; The tag names `symbol' and `use' are reserved for the cl core. Their names are prepended by 'svg-'.
+  (case name
+    ('set (setf name 'svg-set))
+    ('symbol (setf name 'svg-symbol)))
+  (let ((effective-attributes attributes)
+        (tag-name (if (stringp name)
+                      name
+                      (string-downcase (symbol-name name)))))
+    (labels ((gen-attr-var-name (attr)
+               (if (stringp attr)
+                   (intern (string-upcase (hyphenize attr)))
+                   attr))
+             (hyphenize (str)
+               (coerce (iter (for c :in-vector str)
+                             (if (upper-case-p c)
+                                 (progn
+                                   (collect #\-)
+                                   (collect (char-downcase c)))
+                                 (collect c)))
+                       'string)))
+      (let ((tag-symbol (intern (string-upcase (hyphenize tag-name)))))
+        `(progn
+          (export ',tag-symbol)
+          (deftag ,tag-symbol
+              (&attribute ,@(mapcar #'gen-attr-var-name effective-attributes)
+                          &body body)
+            (emit-open-tag ,tag-name
+                           (list ,@(mapcar (lambda (attr)
+                                             `(cons 
+                                               ,(if (stringp attr)
+                                                    attr
+                                                    (string-downcase (symbol-name attr)))
+                                               ,(gen-attr-var-name attr)))
+                                           effective-attributes)))
+            (emit-body body)
+            (emit-close-tag ,tag-name)))))))
 
 (eval-when (:compile-toplevel :load-toplevel :execute)
  (defun concat-symbol (&rest args)
    "Concatenate symbols or strings to form an interned symbol"
    (intern (format nil "~{~a~}" args))))
-
-(defmacro def-annoying-svg-tag (name &rest attributes)
-  (let ((effective-attributes attributes))
-  `(deftag ,(concat-symbol 'svg- name) (&attribute ,@effective-attributes &body body)
-     (emit-open-tag ,(string-downcase (symbol-name name))
-                    (list ,@(mapcar (lambda (attr)
-                                      `(cons ,(string-downcase (symbol-name attr)) ,attr))
-                                    effective-attributes)))
-     (emit-body body)
-     (emit-close-tag ,(string-downcase (symbol-name name))))))
 
 (def-svg-tag altGlyph
              id
@@ -1272,7 +1266,7 @@
              y2
              transform)
 
-(def-svg-tag-humpback "linearGradient"
+(def-svg-tag "linearGradient"
              id
              xml:base
              xml:lang
@@ -1799,7 +1793,7 @@
              contentScriptType
              contentStyleType)
 
-(def-annoying-svg-tag symbol
+(def-svg-tag symbol
              id
              xml:base
              xml:lang
@@ -1932,7 +1926,7 @@
              externalResourcesRequired
              type)
 
-(def-annoying-svg-tag set
+(def-svg-tag set
              id
              xml:base
              xml:lang
@@ -1976,7 +1970,7 @@
              stroke-linejoin
              stroke-miterlimit
              stroke-width
-  style
+             style
              color
              color-interpolation
              color-rendering
