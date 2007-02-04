@@ -35,15 +35,15 @@
           (export ',tag-symbol)
           (deftag ,tag-symbol
               (&attribute ,@(mapcar #'gen-attr-var-name effective-attributes)
+                          &allow-custom-attributes custom-attributes
                           &body body)
             (emit-open-tag ,tag-name
-                           (list ,@(mapcar (lambda (attr)
-                                             `(cons 
-                                               ,(if (stringp attr)
-                                                    attr
-                                                    (string-downcase (symbol-name attr)))
-                                               ,(gen-attr-var-name attr)))
-                                           effective-attributes)))
+                           (list* ,@(iter (for attr :in effective-attributes)
+                                          (collect (if (stringp attr)
+                                                       attr
+                                                       (string-downcase (symbol-name attr))))
+                                          (collect (gen-attr-var-name attr)))
+                                  custom-attributes))
             (emit-body body)
             (emit-close-tag ,tag-name)))))))
 

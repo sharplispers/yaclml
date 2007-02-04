@@ -28,22 +28,27 @@ http://www.w3.org/TR/1999/REC-html401-19991224/index/elements.html
 used so generated XHTML would follow guidelines described in
 http://www.w3.org/TR/xhtml1/#guidelines"
   (let ((effective-attributes (make-effective-attributes attributes)))
-    `(deftag ,name (&attribute ,@effective-attributes &body body)
-     (emit-empty-tag ,(string-downcase (symbol-name name))
-                         (list ,@(mapcar (lambda (attr)
-                                           `(cons ,(string-downcase (symbol-name attr)) ,attr))
-                                         effective-attributes))))))
-
+    (with-unique-names (custom-attributes)
+      `(deftag ,name (&attribute ,@effective-attributes
+                      &allow-custom-attributes ,custom-attributes)
+         (emit-empty-tag ,(string-downcase (symbol-name name))
+                         (list ,@(iter (for attr :in effective-attributes)
+                                       (collect (string-downcase (symbol-name attr)))
+                                       (collect attr)))
+                         ,custom-attributes)))))
 
 (defmacro def-html-tag (name &rest attributes)
   (let ((effective-attributes (make-effective-attributes attributes)))
-  `(deftag ,name (&attribute ,@effective-attributes &body body)
-     (emit-open-tag ,(string-downcase (symbol-name name))
-                    (list ,@(mapcar (lambda (attr)
-                                      `(cons ,(string-downcase (symbol-name attr)) ,attr))
-                                    effective-attributes)))
-     (emit-body body)
-     (emit-close-tag ,(string-downcase (symbol-name name))))))
+    (with-unique-names (custom-attributes)
+      `(deftag ,name (&attribute ,@effective-attributes
+                      &allow-custom-attributes ,custom-attributes &body body)
+         (emit-open-tag ,(string-downcase (symbol-name name))
+                        (list ,@(iter (for attr :in effective-attributes)
+                                      (collect (string-downcase (symbol-name attr)))
+                                      (collect attr)))
+                        ,custom-attributes)
+         (emit-body body)
+         (emit-close-tag ,(string-downcase (symbol-name name)))))))
 
 (defun href (base &rest params)
   (with-output-to-string (href)
@@ -209,10 +214,10 @@ http://www.w3.org/TR/xhtml1/#guidelines"
 
 (def-empty-html-tag <:hr :core :event width align)
 
-(deftag <:html (&attribute dir lang (prologue t) &body body)
+(deftag <:html (&attribute dir lang (prologue t) &allow-custom-attributes custom-attributes &body body)
   (when prologue
     (emit-princ "<!DOCTYPE html PUBLIC \"-//W3C//DTD XHTML 1.0 Strict//EN\" \"http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd\">"))
-  (emit-open-tag "html" (list (cons "dir" dir) (cons "lang" lang)))
+  (emit-open-tag "html" (list* "dir" dir "lang" lang custom-attributes))
   (emit-body body)
   (emit-close-tag "html"))
 

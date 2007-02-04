@@ -97,10 +97,6 @@
   "The list of currently collected code this yaclml macro should
    expand into.")
 
-(defvar %yaclml-custom-attributes% nil
-  "The list of collected custom attributes in the most recent attribute-bind.
-   Custom attributes are defined with (@ name value ...) or (@ list-of-name-value-pairs).")
-
 (defvar *expanders* (make-hash-table :test 'eql)
   "Hash table mapping expanders to the expander function.")
 
@@ -184,31 +180,16 @@
       (write-as-html (princ-to-string value) :stream *yaclml-stream*)))
 
 (defun emit-princ-attributes (attributes)
-  ;; convert the list of attributes at compile time to the format we expect when attributes are provided at runtime.
-  ;; this way this conversion only happens at compile time, not the other way around.
-  (%emit-princ-attributes (iter (for (name . value) in attributes)
-                                (nconcing (list name value))))
-  (dolist (custom-attributes %yaclml-custom-attributes%)
-    (if (rest custom-attributes)
-        (%emit-princ-attributes custom-attributes)
-        (emit-code `(iter (for (name value) on ,(first custom-attributes) :by #'cddr)
-                          (unless (stringp name)
-                            (setf name (string-downcase (string name))))
-                          (emit-attribute name value))))))
-
-(defun %emit-princ-attributes (attributes)
   "Assuming attributes is a list of (name1 value1 name2 value2 ...), emit
-   the code necessary to print them at runtime. If VALUE is a
-   list every element will be concatenated separated by a space to
-   form the final string value of the attribute.
+the code necessary to print them at runtime. If VALUE is a
+list every element will be concatenated separated by a space to
+form the final string value of the attribute.
 
 If the value of any of the attributes is NIL it will be ignored.
 
 If a value is the symbol T the name of the attribute will be used
 as the value."
-  (unless (evenp (length attributes))
-    (error "The number of elements in the attribute list is not even"))
-  (iter (for (key value) on attributes :by #'cddr)
+  (iter (for (key value) :on attributes :by #'cddr)
         (cond
           ((eql t value)
            ;; according to xhtml thoses attributes which in html are
@@ -239,13 +220,14 @@ as the value."
     (emit-princ #\Newline)
     (emit-princ (make-string %yaclml-indentation-depth% :initial-element #\Space))))
 
-(defun emit-open-tag (name attributes)
+(defun emit-open-tag (name &rest attribute-lists)
   "Emit the code required to print an open tag whose name is NAME and
-with the attributes attributes."
+with the attributes ATTRIBUTES. The entries in ATTRIBUTES are expected to
+be even long setf-like lists of name-value pairs defining the attributes."
   (incf %yaclml-indentation-depth% 2)
   (emit-princ "<")
   (emit-princ name)
-  (emit-princ-attributes attributes)
+  (mapc #'emit-princ-attributes attribute-lists)
   (emit-indentation)
   (emit-princ ">"))
 
@@ -256,11 +238,11 @@ with the attributes attributes."
   (emit-indentation)
   (emit-princ ">"))
 
-(defun emit-empty-tag (name attributes)
+(defun emit-empty-tag (name &rest attributes)
   "Emit the code required to print an empty tag with name NAME and a
-attributes ATTRIBUTES."
+attributes ATTRIBUTES. See EMIT-OPEN-TAG for more details."
   (emit-princ "<" name)
-  (emit-princ-attributes attributes)
+  (mapc #'emit-princ-attributes attributes)
   (emit-indentation)
   (emit-princ "/>"))
 
@@ -318,8 +300,8 @@ will be executed at runtime."
     `(progn
        (setf (gethash ',name *expanders*)
              (lambda (,contents)
-               (handler-bind ((unrecognized-attribute (lambda (c)
-                                                        (setf (tag c) ,contents))))
+               (handler-bind ((tag-related-error (lambda (c)
+                                                   (setf (tag c) ,contents))))
                  (attribute-bind ,attributes ,contents
                    ,@body))))
        (defmacro ,name (&rest contents)
@@ -372,9 +354,7 @@ and just wrap the body in an xml tag."
 (defmacro wrap-in-tag ((tag-name &rest tag-attributes) &body body)
   (with-unique-names (tname)
     `(let ((,tname ,(string-downcase (string tag-name))))
-       (emit-open-tag ,tname (list ,@(loop
-                                        for (k v) on tag-attributes by #'cddr
-                                        collect `(cons ,k ,v))))
+      (emit-open-tag ,tname ,tag-attributes)
        (prog1
           (progn ,@body)
          (emit-close-tag ,tname)))))
@@ -463,18 +443,20 @@ normal lisp code. See enable-xml-syntax for more details."
                              (string-downcase (princ-to-string head))))
                (%yaclml-code% nil)
                (%yaclml-indentation-depth% 0))
-          (attribute-bind
-              (&allow-other-attributes other-attributes &body body)
+          (attribute-bind (&allow-other-attributes other-attributes &body body)
               (if simple-version
                   list
                   (cdr list))
             (let* ((protect nil)
                    (emittable-attributes
-                    (iter (for attribute on other-attributes by 'cddr)
-                          (if (eq (first attribute) :with-unwind-protect)
-                              (setf protect (second attribute))
-                              (collect (cons (string-downcase (string (first attribute)))
-                                             (second attribute)))))))
+                    (iter (for (attribute value) :on other-attributes :by #'cddr)
+                          (if (eq attribute :with-unwind-protect)
+                              (setf protect value)
+                              (progn
+                                (collect (if (stringp attribute)
+                                             attribute
+                                             (string-downcase (string attribute))))
+                                (collect value))))))
               (if body
                   (let* ((open-code)
                          (body-code)
