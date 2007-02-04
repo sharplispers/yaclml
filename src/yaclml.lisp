@@ -425,12 +425,13 @@ normal lisp code. See enable-xml-syntax for more details."
         ;; evaluated and the result is used as the tag name.
         (simple-version t))
     (unwind-protect
-         (unread-char char s)                    ; read the entire token
-         (setf symbol (with-standard-io-syntax   ; turn ourself off
-                          (let ((*package* fake-package))
-                            (read s t nil t))))
-         (setf symbol-name (string-downcase (symbol-name symbol)))
-         (delete-package fake-package))
+         (progn
+           (unread-char char s)
+           (setf symbol (with-standard-io-syntax ; turn ourselves off
+                            (let ((*package* fake-package))
+                              (read s t nil t))))
+           (setf symbol-name (string-downcase (symbol-name symbol))))
+      (delete-package fake-package))
     ;;(format t "Read in symbol ~S, symbol-package is ~S~%" symbol (symbol-package symbol)) ; TODO debug code
     (setf next-char (peek-char nil s t nil t))
     (if (and (string= symbol-name "<")
