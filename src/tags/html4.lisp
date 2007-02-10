@@ -448,11 +448,8 @@ http://www.w3.org/TR/xhtml1/#guidelines"
 
 (def-html-tag <:var :core :event :i18n)
 
-(def-html-tag <:embed
-              src
-              width
-              height
-              type)
+(deftag <:embed (&allow-other-attributes others)
+  (emit-empty-tag "embed" others))
 
 ;; Copyright (c) 2002-2005, Edward Marco Baringer
 ;; All rights reserved. 
