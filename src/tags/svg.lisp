@@ -5,6 +5,7 @@
 ;;;; * YACLML tags mapping to SVG tags.
 
 ;; TODO this file badly needs factoring, see def-html-tag for examples to factor out attribute groups
+;; TODO find out something for the xml:foo and xlink:foo tags
 
 ;; ** Helper macros and function for defining the tag macros.
 

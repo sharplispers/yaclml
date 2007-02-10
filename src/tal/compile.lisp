@@ -81,7 +81,11 @@
    (cons "http://common-lisp.net/project/bese/tal/params"
          (find-package :it.bese.yaclml.tal.include-params))
    (cons "http://common-lisp.net/project/bese/yaclml/core"
-         (find-package :it.bese.yaclml.tags)))
+         (find-package :it.bese.yaclml.tags))
+   (cons "http://www.w3.org/XML/1998/namespace"
+         (find-package :it.bese.yaclml.xml))
+   (cons "http://www.w3.org/1999/xlink/"
+         (find-package :it.bese.yaclml.xlink)))
   "Default mapping of xmlns to packages.")
 
 (defvar *expression-package* nil
@@ -98,7 +102,9 @@
 (defmacro def-tag-handler (tag-name (tag) &body body)
   "Defines a new tag handlec named TAG-NAME."
   `(progn
-     (push (cons ',tag-name (lambda (,tag) ,@body))
+     (push (cons ',tag-name (lambda (,tag)
+                              (declare (ignorable ,tag))
+                              ,@body))
            *tal-tag-handlers*)
      ',tag-name))
 

@@ -81,19 +81,22 @@
    ;; yaclml+ (shortcuts)
    #:ah #:ai))
 
-;; these two are temporary dummy packages that take care the svg tags
+;; the nicknames for these packages take care the svg tags
 ;; below don't signal an error.  because of symbol names and xml
 ;; format incompatibilities.
+;; TODO clean up, we have the (@ ...) syntax now. see also svg.lisp.
 
-(defpackage :xml
+(defpackage :it.bese.yaclml.xml
   (:use)
+  (:nicknames :xml)
   (:export
    #:base
    #:lang
    #:space))
 
-(defpackage :xlink
+(defpackage :it.bese.yaclml.xlink
   (:use)
+  (:nicknames :xlink)
   (:export
    #:type
    #:href
