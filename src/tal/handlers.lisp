@@ -44,7 +44,7 @@
     (remf (cdar tag) 'tal::dolist)
     (with-unique-names (loop-item-sym)
       `(dolist (,loop-item-sym ,value)
-         (let ((tal-environment (extend-environment ,loop-item-sym tal-environment)))
+         (let ((-tal-environment- (extend-environment ,loop-item-sym -tal-environment-)))
            ,(transform-lxml-form tag))))))
 
 (def-tag-handler tal::lisp (tag)
@@ -90,7 +90,7 @@
                                               (merge-pathnames template-name *tal-truename*)
                                               `(let ((tal-truename ,*tal-truename*))
                                                  (merge-pathnames ,template-name tal-truename))))
-                    (extend-environment (tal-env ,@(augmented-env)) tal-environment)
+                    (extend-environment (tal-env ,@(augmented-env)) -tal-environment-)
                     ,generator))))))
 
 (def-attribute-handler tal::in-package (tag)

@@ -51,6 +51,8 @@
    #:make-standard-environment
    #:extend-environment
    #:add-binding
+   #:-tal-environment-
+   #:tal-value
    #:lookup-tal-variable
    #:tal-env
 

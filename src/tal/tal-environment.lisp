@@ -18,6 +18,10 @@
 
 ;;;; TAL Environment protocol
 
+(defmacro tal-value (name)
+  "Get the tal variable called NAME from -tal-environment-"
+  `(lookup-tal-variable ,name -tal-environment-))
+
 (defgeneric lookup-tal-variable (name environment)
   (:documentation "Return the value assciated with NAME (a
   symbol) in the environment ENVIRONMENT."))
