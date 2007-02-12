@@ -106,9 +106,7 @@ See alse: TAL-ENV"
 (defun tal-env (&rest pairs)
   "Creates a fresh tal environment from the plist PAIRS."
   (list
-   (iterate (for (key value) on pairs by
-                 ;; dirty sbcl workaround:
-                 (lambda (v) (cddr v)))
+   (iterate (for (key value) :on pairs :by #'cddr)
             (collect (cons key value)))))
 
 ;;;; Assoc list binding set
