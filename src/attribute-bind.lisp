@@ -125,6 +125,7 @@ in LIST after attribute parsing is complete."
          (other-attributes nil)
          (custom-attributes nil)
          (put (lambda (item)
+                (assert (symbolp item) (item) "Invalid attribute specification at mandatory attribute position: ~A" item)
                 (push item required))))
     (dolist (attr attribute-spec)
       ;; the #'string= tom-follery (god i love that word) is so that
