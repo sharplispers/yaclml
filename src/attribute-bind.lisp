@@ -4,6 +4,13 @@
 
 ;;;; * ATTRIBUTE-BIND
 
+;; This is used to represent variable in (@ foo) forms. We need it
+;; for being able to type-check for it.
+;; (let ((foo (list :att1 "val1")))
+;;   <tag (@ foo)>)
+(defstruct (runtime-attribute-list-reference (:conc-name ralr-))
+  (form nil))
+
 ;;;; This macro serves the same purpose as destructuring-bind but
 ;;;; allows for a different syntax.
 
@@ -54,14 +61,20 @@ in LIST after attribute parsing is complete."
            ,@(loop
                 for local in locals
                 collect `(setf ,local (pop ,attribute-values)))
-           (setf ,attribute-values (iter (for el :in ,attribute-values)
-                                         (cond ((and (listp el)
-                                                     (symbolp (first el))
-                                                     (string= "@" (first el)))
-                                                ,(if custom-attributes
-                                                     `(setf ,custom-attributes (append ,custom-attributes (rest el)))
-                                                     `(error 'illegal-attribute-use :attribute-type "custom")))
-                                               (t (collect el)))))
+           (setf ,attribute-values
+                 (iter (for el :in ,attribute-values)
+                       (cond ((and (listp el)
+                                   (symbolp (first el))
+                                   (string= "@" (first el)))
+                              ,(if custom-attributes
+                                   `(setf ,custom-attributes
+                                          (append ,custom-attributes
+                                                  (if (cddr el)
+                                                      (rest el)
+                                                      (list (make-runtime-attribute-list-reference
+                                                             :form (second el))))))
+                                   `(error 'illegal-attribute-use :attribute-type "custom")))
+                             (t (collect el)))))
            (iterate
             (while (and (consp ,attribute-values)
                         (keywordp (car ,attribute-values))))

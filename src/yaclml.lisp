@@ -189,30 +189,37 @@ If the value of any of the attributes is NIL it will be ignored.
 
 If a value is the symbol T the name of the attribute will be used
 as the value."
-  (iter (for (key value) :on attributes :by #'cddr)
-        (cond
-          ((eql t value)
-           ;; according to xhtml thoses attributes which in html are
-           ;; specified without a value should just use the attribute
-           ;; name as the xhtml value
-           (emit-princ " " key "=\"" key "\""))
-          ((eql nil value) nil)
-          ((yaclml-constant-p value)
-           (progn
-             (emit-princ " " key "=\"")
-             (emit-html value)
-             (emit-princ "\"")))
-          (t
-           (if (and (consp value)
-                    (eql 'cl:concatenate (first value))
-                    (consp (cdr value))
-                    (eql 'cl:string (second value)))
-               ;; a call to concatenate can be dealt with specially
-               (progn
-                 (emit-princ " " key "=\"")
-                 (dolist (val (cddr value))
-                   (emit-princ val)))
-               (emit-princ-attribute key value)))))
+  (iter (while attributes)
+        (for key = (pop attributes))
+        (if (runtime-attribute-list-reference-p key)
+            (emit-code `(iter (for (name value) :on ,(ralr-form key) :by #'cddr)
+                              (unless (stringp name)
+                                (setf name (string-downcase (string name))))
+                              (emit-attribute name value)))
+            (let ((value (pop attributes)))
+              (cond
+                ((eql t value)
+                 ;; according to xhtml thoses attributes which in html are
+                 ;; specified without a value should just use the attribute
+                 ;; name as the xhtml value
+                 (emit-princ " " key "=\"" key "\""))
+                ((eql nil value) nil)
+                ((yaclml-constant-p value)
+                 (progn
+                   (emit-princ " " key "=\"")
+                   (emit-html value)
+                   (emit-princ "\"")))
+                (t
+                 (if (and (consp value)
+                          (eql 'cl:concatenate (first value))
+                          (consp (cdr value))
+                          (eql 'cl:string (second value)))
+                     ;; a call to concatenate can be dealt with specially
+                     (progn
+                       (emit-princ " " key "=\"")
+                       (dolist (val (cddr value))
+                         (emit-princ val)))
+                     (emit-princ-attribute key value)))))))
   %yaclml-code%)
 
 (defun emit-indentation ()
@@ -220,14 +227,14 @@ as the value."
     (emit-princ #\Newline)
     (emit-princ (make-string %yaclml-indentation-depth% :initial-element #\Space))))
 
-(defun emit-open-tag (name &rest attribute-lists)
+(defun emit-open-tag (name &rest attributes)
   "Emit the code required to print an open tag whose name is NAME and
-with the attributes ATTRIBUTES. The entries in ATTRIBUTES are expected to
-be even long setf-like lists of name-value pairs defining the attributes."
+with the attributes ATTRIBUTES. ATTRIBUTES is expected to be an even
+long, setf-like list of name-value pairs defining the attributes."
   (incf %yaclml-indentation-depth% 2)
   (emit-princ "<")
   (emit-princ name)
-  (mapc #'emit-princ-attributes attribute-lists)
+  (mapc #'emit-princ-attributes attributes)
   (emit-indentation)
   (emit-princ ">"))
 
@@ -447,55 +454,33 @@ normal lisp code. See enable-xml-syntax for more details."
               (if simple-version
                   list
                   (cdr list))
-            (let* ((protect nil)
-                   (emittable-attributes
-                    (iter (for (attribute value) :on other-attributes :by #'cddr)
-                          (if (eq attribute :with-unwind-protect)
-                              (setf protect value)
-                              (progn
-                                (collect (if (stringp attribute)
-                                             attribute
-                                             (string-downcase (string attribute))))
-                                (collect value))))))
-              (if body
-                  (let* ((open-code)
-                         (body-code)
-                         (close-code)
-                         (rebind-tag-name-p (consp tag-name))
-                         (original-tag-name tag-name))
-                    (when rebind-tag-name-p
-                      (setf tag-name (gensym "TAG-NAME")))
-                    (let ((%yaclml-code% '()))
-                      (emit-open-tag tag-name emittable-attributes)
-                      (setf open-code %yaclml-code%))
-                    (let ((%yaclml-code% '()))
-                      (emit-body body)
-                      (setf body-code %yaclml-code%))
-                    (let ((%yaclml-code% '()))
-                      (emit-close-tag tag-name)
-                      (setf close-code %yaclml-code%))
-                    (if protect
-                        (if rebind-tag-name-p
-                            (emit-code `(let ((,tag-name ,original-tag-name))
-                                         ,@(emitter open-code)
-                                         (unwind-protect
-                                              (progn ,@(emitter body-code))
-                                           ,@(emitter close-code))))
-                            (emit-code `(progn
-                                         ,@(emitter open-code)
-                                         (unwind-protect
-                                              (progn ,@(emitter body-code))
-                                           ,@(emitter close-code)))))
-                        (if rebind-tag-name-p
-                            (emit-code `(let ((,tag-name ,original-tag-name))
-                                         ,@(emitter open-code)
-                                         ,@(emitter body-code)
-                                         ,@(emitter close-code)))
-                            (emit-code `(progn
-                                         ,@(emitter open-code)
-                                         ,@(emitter body-code)
-                                         ,@(emitter close-code))))))
-                  (emit-empty-tag tag-name emittable-attributes))))
+            (if body
+                (let* ((open-code)
+                       (body-code)
+                       (close-code)
+                       (rebind-tag-name-p (consp tag-name))
+                       (original-tag-name tag-name))
+                  (when rebind-tag-name-p
+                    (setf tag-name (gensym "TAG-NAME")))
+                  (let ((%yaclml-code% '()))
+                    (emit-open-tag tag-name other-attributes)
+                    (setf open-code %yaclml-code%))
+                  (let ((%yaclml-code% '()))
+                    (emit-body body)
+                    (setf body-code %yaclml-code%))
+                  (let ((%yaclml-code% '()))
+                    (emit-close-tag tag-name)
+                    (setf close-code %yaclml-code%))
+                  (if rebind-tag-name-p
+                      (emit-code `(let ((,tag-name ,original-tag-name))
+                                   ,@(emitter open-code)
+                                   ,@(emitter body-code)
+                                   ,@(emitter close-code)))
+                      (emit-code `(progn
+                                   ,@(emitter open-code)
+                                   ,@(emitter body-code)
+                                   ,@(emitter close-code)))))
+                (emit-empty-tag tag-name other-attributes)))
           `(progn
             ,@(emitter %yaclml-code%)
             (values)))))))
