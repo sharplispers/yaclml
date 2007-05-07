@@ -221,9 +221,20 @@ http://www.w3.org/TR/xhtml1/#guidelines"
 
 (def-empty-html-tag <:hr :core :event width align)
 
-(deftag <:html (&attribute dir lang (prologue t) &allow-custom-attributes custom-attributes &body body)
+(deftag <:html (&attribute dir lang prologue doctype
+                           &allow-custom-attributes custom-attributes
+                           &body body)
+  (assert (or (and (not prologue)
+                   (not doctype))
+              (xor prologue doctype)) () "You can only specify one of PROLOGUE or DOCTYPE")
+  (when doctype
+    (emit-code `(awhen ,doctype
+                 (princ "<!DOCTYPE html PUBLIC " *yaclml-stream*)
+                 (princ it *yaclml-stream*)
+                 (princ (strcat ">" ~%) *yaclml-stream*))))
   (when prologue
-    (emit-princ "<!DOCTYPE html PUBLIC \"-//W3C//DTD XHTML 1.0 Strict//EN\" \"http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd\">"))
+    (emit-code `(awhen ,prologue
+                 (princ it *yaclml-stream*))))
   (emit-open-tag "html" (list* "dir" dir "lang" lang custom-attributes))
   (emit-body body)
   (emit-close-tag "html"))
