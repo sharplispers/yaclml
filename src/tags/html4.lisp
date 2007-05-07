@@ -4,6 +4,13 @@
 
 ;;;; * YACLML tags mapping to HTML4 tags.
 
+(defparameter +xhtml-strict-doctype+
+  "\"-//W3C//DTD XHTML 1.0 Strict//EN\" \"http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd\"")
+(defparameter +xhtml-transitional-doctype+
+  "\"-//W3C//DTD XHTML 1.0 Transitional//EN\" \"http://www.w3.org/TR/xhtml1/DTD/transitional.dtd\"")
+(defparameter +xhtml-frameset-doctype+
+  "\"-//W3C//DTD XHTML 1.0 Frameset//EN\" \"http://www.w3.org/TR/xhtml1/DTD/xhtml1-frameset.dtd\"")
+
 ;;;; ** Helper macro fer defining the tag macros
 
 (eval-when (:compile-toplevel :load-toplevel :execute)

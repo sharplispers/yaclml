@@ -8,6 +8,7 @@
   (:use :common-lisp :it.bese.arnesi :iterate)
   (:shadowing-import-from :iterate #:while #:until)
   (:export
+
    ;; code generation
    #:emit-princ
    #:emit-html
@@ -19,9 +20,11 @@
    #:emit-body
    #:emit-xml-tag
    #:wrap-in-tag
+
    ;; defining tags
    #:deftag
    #:deftag-macro
+
    ;; using yaclml
    #:with-yaclml-stream
    #:with-yaclml-output-to-string
@@ -32,6 +35,7 @@
    #:with-xml-syntax
    #:*yaclml-stream*
    #:*yaclml-indent*
+
    ;; tal
    #:compile-tal-string
    #:compile-tal-file
@@ -57,6 +61,10 @@
    #:tal-env
 
    #:href
+
+   #:+xhtml-strict-doctype+
+   #:+xhtml-transitional-doctype+
+   #:+xhtml-frameset-doctype+
    ))
 
 (defpackage :it.bese.yaclml.tags
