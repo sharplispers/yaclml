@@ -7,15 +7,17 @@
 (deftag <:progn (&body body)
   (emit-body body))
 
-(deftag <:as-xml (&body text)
+(deftag <:as-html (&body text)
   (dolist (txt text)
     (emit-html txt)))
 
-(deftag-macro <:as-html (&body text)
-  `(<:as-xml ,@text))
+(deftag <:ah (&body text)
+  (dolist (txt text)
+    (emit-html txt)))
 
-(deftag-macro <:ah (&body text)
-  `(<:as-html ,@text))
+(deftag <:ai (&body text)
+  (dolist (txt text)
+    (emit-princ txt)))
 
 (deftag <:as-is (&attribute quotedp &body text)
   (when quotedp
@@ -24,9 +26,6 @@
     (emit-princ txt))
   (when quotedp
     (emit-princ ~% "]]>" ~%)))
-
-(deftag-macro <:ai (&body text)
-  `(<:as-is ,@text))
 
 (deftag <:call-with-yaclml-stream (stream-var &body body)
   (emit-code `(let ((,stream-var *yaclml-stream*)) ,@body)))
