@@ -86,7 +86,7 @@
    #:applet #:param #:marquee #:embed
    ;; YACLML extended HTML
    #:href #:stylesheet #:text #:submit #:image #:checkbox #:file
-   #:as-is #:as-html #:call-with-yaclml-stream #:comment #:progn
+   #:as-is #:as-html #:as-xml #:call-with-yaclml-stream #:comment #:progn
    #:&nbsp
    ;; yaclml+ (shortcuts)
    #:ah #:ai))
