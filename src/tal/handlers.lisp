@@ -18,6 +18,15 @@
       (transform-lxml-form `((,tag-name ,@attributes)
                              ((CONTENT-DUMMY tal::replace ,value tal::escape-html ,escape-html) "DUMMY"))))))
 
+(def-attribute-handler tal::content-as-is (tag)
+  "Becomes a TAL:REPLACE."
+  (let ((value (getf (cdar tag) 'tal::content-as-is)))
+    (remf (cdar tag) 'tal::content-as-is)
+    (destructuring-bind ((tag-name &rest attributes) &rest body) tag
+      (declare (ignore body))
+      (transform-lxml-form `((,tag-name ,@attributes)
+                             ((CONTENT-DUMMY tal::replace ,value tal::escape-html "nil") "DUMMY"))))))
+
 (def-attribute-handler tal::replace (tag)
   (let ((value (read-tal-expression-from-string (getf (cdar tag) 'tal::replace)))
         (escape (if-bind escape (getf (cdar tag) 'tal::escape-html)
