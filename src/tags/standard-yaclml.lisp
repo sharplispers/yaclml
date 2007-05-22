@@ -11,13 +11,11 @@
   (dolist (txt text)
     (emit-html txt)))
 
-(deftag <:ah (&body text)
-  (dolist (txt text)
-    (emit-html txt)))
+(deftag-macro <:ah (&body text)
+  `(<:as-html ,@text))
 
-(deftag <:ai (&body text)
-  (dolist (txt text)
-    (emit-princ txt)))
+(deftag-macro <:ai (&attribute quotedp &body text)
+  `(<:as-is :quotedp ,quotedp ,@text))
 
 (deftag <:as-is (&attribute quotedp &body text)
   (when quotedp
