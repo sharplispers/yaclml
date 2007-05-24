@@ -87,7 +87,7 @@
    ;; YACLML extended HTML
    #:href #:stylesheet #:text #:submit #:image #:checkbox #:file
    #:as-is #:as-html #:call-with-yaclml-stream #:comment #:progn
-   #:&nbsp
+   #:&nbsp #:format
    ;; yaclml+ (shortcuts)
    #:ah #:ai))
 

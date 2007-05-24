@@ -7,6 +7,11 @@
 (deftag <:progn (&body body)
   (emit-body body))
 
+(defun <:format (message &rest args)
+  (write-string (escape-as-html (apply #'format nil message args))
+                *yaclml-stream*)
+  (values))
+
 (deftag <:as-html (&body text)
   (dolist (txt text)
     (emit-html txt)))
