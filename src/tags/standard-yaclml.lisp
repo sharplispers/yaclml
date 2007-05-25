@@ -24,11 +24,11 @@
 
 (deftag <:as-is (&attribute quotedp &body text)
   (when quotedp
-    (emit-princ ~% "<![CDATA[" ~%))
+    (emit-princ ~% "<![CDATA["))
   (dolist (txt text)
     (emit-princ txt))
   (when quotedp
-    (emit-princ ~% "]]>" ~%)))
+    (emit-princ "]]>" ~%)))
 
 (deftag <:call-with-yaclml-stream (stream-var &body body)
   (emit-code `(let ((,stream-var *yaclml-stream*)) ,@body)))
