@@ -19,7 +19,7 @@
 ;;;; TAL Environment protocol
 
 (defmacro tal-value (name)
-  "Get the tal variable called NAME from -tal-environment-"
+  "Get the tal variable called NAME from -TAL-ENVIRONMENT-"
   `(lookup-tal-variable ,name -tal-environment-))
 
 (defgeneric lookup-tal-variable (name environment)
@@ -28,11 +28,11 @@
 
 (defgeneric (setf lookup-tal-variable) (value name environment))
 
-(defgeneric fetch-value (name binding)
+(defgeneric fetch-tal-value (name binding)
   (:documentation "Return the value associated with NAME in the
   binding set BINDING."))
 
-(defgeneric (setf fetch-value) (value name binding))
+(defgeneric (setf fetch-tal-value) (value name binding))
 
 (defun extend-environment (new-environment environment)
   "Create a new environment with all the bindings in NEW-ENVIRONMENT and ENVIRONMENT.
@@ -46,7 +46,7 @@ ENVIRONMENT."
 
 ;;;; Standard Environment
 
-(defun make-standard-environment (&rest binding-sets)
+(defun make-standard-tal-environment (&rest binding-sets)
   "Returns an environment consisting of BINDING-SETS.
 
 Each binding set can be an alist, an object, a hash table, or any
@@ -62,7 +62,7 @@ See alse: TAL-ENV"
   (loop
      for bind-set in env
      do (multiple-value-bind (value found-p)
-            (fetch-value name bind-set)
+            (fetch-tal-value name bind-set)
           (when found-p
             (return-from lookup-tal-variable (values value t)))))
   (values nil nil))
@@ -96,11 +96,11 @@ See alse: TAL-ENV"
   (loop
      for bind-set in env
      do (multiple-value-bind (old-value found-p)
-            (fetch-value name bind-set)
+            (fetch-tal-value name bind-set)
 	  (declare (ignore old-value))
           (when found-p
 	    (return-from lookup-tal-variable
-	      (setf (fetch-value name bind-set) value)))))
+	      (setf (fetch-tal-value name bind-set) value)))))
   (error 'unfound-tal-variable :variable-name name :environment env))
 
 (defun tal-env (&rest pairs)
@@ -111,35 +111,35 @@ See alse: TAL-ENV"
 
 ;;;; Assoc list binding set
 
-(defmethod fetch-value (name (binding-set list))
+(defmethod fetch-tal-value (name (binding-set list))
   (let ((cons (assoc name binding-set :test #'eql)))
     (if cons
         (values (cdr cons) t)
         (values nil nil))))
 
-(defmethod (setf fetch-value) (value name (binding-set list))
+(defmethod (setf fetch-tal-value) (value name (binding-set list))
   (declare (ignore value))
   (error 'unsettable-tal-variable :variable-name name :environment binding-set))
 
 ;;;; Object binding sets
 
-(defmethod fetch-value (name (obj standard-object))
+(defmethod fetch-tal-value (name (obj standard-object))
   (if (and (slot-exists-p obj name)
            (slot-boundp obj name))
       (values (slot-value obj name) t)
       (values nil nil)))
 
-(defmethod (setf fetch-value) (value name (obj standard-object))
+(defmethod (setf fetch-tal-value) (value name (obj standard-object))
   (if (slot-exists-p obj name)
       (setf (slot-value obj name) value)
       (error 'unfound-tal-variable :variable-name value :environment obj)))
 
 ;;;; Hash table binding sets
 
-(defmethod fetch-value (name (ht hash-table))
+(defmethod fetch-tal-value (name (ht hash-table))
   (gethash name ht))
 
-(defmethod (setf fetch-value) (value name (ht hash-table))
+(defmethod (setf fetch-tal-value) (value name (ht hash-table))
   (setf (gethash name ht) value))
 
 ;; Copyright (c) 2002-2005, Edward Marco Baringer

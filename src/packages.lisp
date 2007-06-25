@@ -51,14 +51,13 @@
    #:transform-lxml-form
    #:transform-lxml-tree
 
-   #:push-binding
-   #:make-standard-environment
-   #:extend-environment
-   #:add-binding
-   #:-tal-environment-
-   #:tal-value
-   #:lookup-tal-variable
+   #:make-standard-tal-environment
    #:tal-env
+   #:tal-value
+   #:extend-environment
+   #:-tal-environment-
+   #:lookup-tal-variable
+   #:fetch-tal-value
 
    #:href
 

@@ -92,6 +92,7 @@
   "The value of *PACKAGE* when tal attribute expressions and for
   looking up symbols in the environment.")
 
+;; TODO these are kludgy for C-c C-c, they push every time. probably a hashtable would do better...
 (defmacro def-attribute-handler (attribute (tag) &body body)
   "Defines a new attribute handler name ATTRIBUTE."
   `(progn
