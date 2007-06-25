@@ -92,15 +92,13 @@
                                   ,@(mapcar #'transform-lxml-form body)))
                 (warn "Ignoring body tag in TAL:INCLUDE: ~S." param-name)))))
       ;; 3) GO!
-      (locally
-          (declare (special *tal-truename*))
-        (with-tal-compile-environment (generator)
-          `(funcall (load-tal ,generator ,(if (constantp template-name)
-                                              (merge-pathnames template-name *tal-truename*)
-                                              `(let ((tal-truename ,*tal-truename*))
-                                                 (merge-pathnames ,template-name tal-truename))))
-                    (extend-environment (tal-env ,@(augmented-env)) -tal-environment-)
-                    ,generator))))))
+      (with-tal-compile-environment (generator)
+        `(funcall (load-tal ,generator ,(if (constantp template-name)
+                                            (merge-pathnames template-name *tal-truename*)
+                                            `(let ((tal-truename ,*tal-truename*))
+                                               (merge-pathnames ,template-name tal-truename))))
+                  (extend-environment (tal-env ,@(augmented-env)) -tal-environment-)
+                  ,generator)))))
 
 (def-attribute-handler tal::in-package (tag)
   (let ((*expression-package* (or (find-package (read-from-string (getf (cdar tag) 'tal::in-package)))

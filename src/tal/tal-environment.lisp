@@ -7,7 +7,6 @@
 (defmacro with-tal-compilation-unit (pathname &body body)
   (rebinding (pathname)
     `(let ((*tal-truename* (truename ,pathname)))
-      (declare (special *tal-truename*))
       ,@body)))
 
 (defun read-tal-file-into-string (pathname)

@@ -71,6 +71,8 @@
 ;;;;   =>
 ;;;;   <td>whatever</td>
 
+(defvar *tal-truename*)
+
 (defvar *yaclml-stream* t
   "The stream to which tags are printed.")
 
