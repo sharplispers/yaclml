@@ -4,7 +4,8 @@
 
 (enable-bracket-reader)
 
-(def-suite :it.bese.yaclml.xml-syntax :in :it.bese.yaclml)
+(eval-when (:compile-toplevel :load-toplevel :execute)
+  (def-suite :it.bese.yaclml.xml-syntax :in :it.bese.yaclml))
 
 (in-suite :it.bese.yaclml.xml-syntax)
 

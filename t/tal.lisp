@@ -2,7 +2,8 @@
 
 (in-package :it.bese.yaclml.test)
 
-(def-suite :it.bese.yaclml.tal :in :it.bese.yaclml)
+(eval-when (:compile-toplevel :load-toplevel :execute)
+  (def-suite :it.bese.yaclml.tal :in :it.bese.yaclml))
 
 (in-suite :it.bese.yaclml.tal)
 
