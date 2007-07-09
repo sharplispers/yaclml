@@ -46,6 +46,12 @@
     `(when ,value
        ,(transform-lxml-form tag))))
 
+(def-attribute-handler tal::unless (tag)
+  (let ((value (read-tal-expression-from-string (getf (cdar tag) 'tal::unless))))
+    (remf (cdar tag) 'tal::unless)
+    `(unless ,value
+       ,(transform-lxml-form tag))))
+
 (def-attribute-handler tal::dolist (tag)
   "On each iteration the environment is extended with the value in
   the value passed to DOLIST."
