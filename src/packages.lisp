@@ -99,6 +99,7 @@
   (:use)
   (:nicknames :xml)
   (:export
+   #:id
    #:base
    #:lang
    #:space))
