@@ -62,6 +62,16 @@
          (let ((-tal-environment- (extend-environment ,loop-item-sym -tal-environment-)))
            ,(transform-lxml-form tag))))))
 
+(def-attribute-handler tal::let (tag)
+  "Extend environment with a given list of bindings, as for LET form."
+  (let ((bindings
+         (loop
+            for (name value) in (read-tal-expression-from-string (getf (cdar tag) 'tal::let))
+            collect `(cons ',name ,value))))
+    (remf (cdar tag) 'tal::let)
+    `(let ((-tal-environment- (extend-environment (list (list ,@bindings)) -tal-environment-)))
+       ,(transform-lxml-form tag))))
+
 (def-tag-handler tal::lisp (tag)
   (read-tal-expression-from-string (first (cdr tag))))
 
