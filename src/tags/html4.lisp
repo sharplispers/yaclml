@@ -248,7 +248,9 @@ http://www.w3.org/TR/xhtml1/#guidelines"
               marginwidth
               name
               scrolling
-              src)
+              src
+	      width
+	      height)
 
 (def-empty-html-tag <:img :core :event :i18n
                     alt
