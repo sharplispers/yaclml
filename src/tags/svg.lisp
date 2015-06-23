@@ -12,8 +12,8 @@
 (defmacro def-svg-tag (name &rest attributes)
   ;; The tag names `symbol' and `use' are reserved for the cl core. Their names are prepended by 'svg-'.
   (case name
-    ('set (setf name 'svg-set))
-    ('symbol (setf name 'svg-symbol)))
+    (set (setf name 'svg-set))
+    (symbol (setf name 'svg-symbol)))
   (let ((effective-attributes attributes)
         (tag-name (if (stringp name)
                       name
