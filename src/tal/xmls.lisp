@@ -159,7 +159,6 @@ characters of RESERVED have been registered in the entity table."
   (let ((str (typecase object
                (string (coerce object 'simple-base-string))
                (t (format nil "~A" object)))))
-    (declare (type simple-base-string str)) ;; mollify sbcl compiler
     (loop with stream = (make-string-output-stream)
           for c across str
           for ent = (entity-of c)
